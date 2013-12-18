@@ -74,7 +74,7 @@ class EditorManager implements EditorProvider {
       if (data.key.startsWith('fileTypePrefs')) {
         var fileType = data.key.substring(data.key.indexOf('/') + 1);
         var currFile = _currentState.file.name;
-        if (fileType == canonicFileExt(currFile)) {
+        if (fileType == canonicalFileExt(currFile)) {
           _aceContainer.applySessionPreferences(
               currFile,
               data.valueAsJson(ifAbsent: () => {'useSoftTabs' : true, 'tabSize' : 2}));
@@ -344,7 +344,7 @@ class _EditorState {
     } else {
       Completer<_EditorState> completer = new Completer<_EditorState>();
       file.getContents().then((text) {
-        manager._prefStore.getJsonValue('fileTypePrefs/${canonicFileExt(file.name)}',
+        manager._prefStore.getJsonValue('fileTypePrefs/${canonicalFileExt(file.name)}',
                                         ifAbsent: () => {'useSoftTabs' : true, 'tabSize' : 2})
             .then((prefs) {
               session = manager._aceContainer.createEditSession(text, file.name, prefs);

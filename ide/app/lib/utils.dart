@@ -63,13 +63,12 @@ const Map<String,String> extensionAliases =
 /**
  * Returns a canonicalized file extension, or `"text"` or if there is no extension
  */
-String canonicFileExt(String fileName) {
+String canonicalFileExt(String fileName) {
   var ext = fileExt(fileName);
   if (ext == null) return 'text';
   if (extensionAliases.containsKey(ext)) return extensionAliases[ext];
   return ext;
 }
-
 
 /**
  * Return whether the current runtime is dart2js (vs Dartium).
