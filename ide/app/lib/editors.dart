@@ -12,6 +12,7 @@ import 'dart:async';
 import 'dart:html' as html;
 
 import 'ace.dart' as ace;
+import 'event_bus.dart';
 import 'preferences.dart';
 import 'utils.dart';
 import 'workspace.dart';
@@ -49,6 +50,8 @@ class EditorManager implements EditorProvider {
   final Workspace _workspace;
   final ace.AceContainer _aceContainer;
   final PreferenceStore _prefStore;
+  final EventBus _eventBus;
+
   final int PREFS_EDITORSTATES_VERSION = 1;
 
   // List of files opened in a tab.
@@ -64,7 +67,9 @@ class EditorManager implements EditorProvider {
   final StreamController<File> _selectedController =
       new StreamController.broadcast();
 
-  EditorManager(this._workspace, this._aceContainer, this._prefStore) {
+  // TODO: Investigate dependency injection OR overridable singletons. We're
+  // passing around too many ctor vars.
+  EditorManager(this._workspace, this._aceContainer, this._prefStore, this._eventBus) {
     _workspace.whenAvailable().then((_) {
       _restoreState().then((_) {
         _loadedCompleter.complete(true);
@@ -233,6 +238,8 @@ class EditorManager implements EditorProvider {
   Timer _timer;
 
   void _startSaveTimer() {
+    _eventBus.addEvent('fileModified', currentFile);
+
     if (_timer != null) _timer.cancel();
 
     _timer = new Timer(new Duration(seconds: 2), () => _saveAll());
@@ -247,6 +254,8 @@ class EditorManager implements EditorProvider {
     // TODO: start a workspace change event; this might modify multiple files
     _openedEditorStates.forEach((e) => e.save());
     // TODO: end the workspace change event
+
+    _eventBus.addEvent('filesSaved', null);
   }
 
   // EditorProvider
@@ -298,9 +307,10 @@ class _EditorState {
   set dirty(bool value) {
     if (_dirty != value) {
       _dirty = value;
-      if (_dirty) {
-        manager._startSaveTimer();
-      }
+    }
+
+    if (value) {
+      manager._startSaveTimer();
     }
   }
 
