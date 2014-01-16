@@ -42,7 +42,13 @@
     "storage",
     "webview",
     "contextMenus",
-    "app.window"
+    "app.window",
+    "usb",
+    {
+      "usbDevices": [
+        { "vendorId": 6353, "productId": 20194 }
+      ]
+    }
   ],
   "file_handlers": {
     "text": {

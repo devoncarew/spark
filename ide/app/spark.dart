@@ -31,6 +31,7 @@ import 'lib/git/objectstore.dart';
 import 'lib/git/options.dart';
 import 'lib/jobs.dart';
 import 'lib/launch.dart';
+import 'lib/mobile.dart';
 import 'lib/preferences.dart' as preferences;
 import 'lib/scm.dart' as scm;
 import 'lib/tests.dart';
@@ -94,6 +95,7 @@ class Spark extends SparkModel implements FilesControllerDelegate {
 
   final JobManager jobManager = new JobManager();
   final LaunchManager launchManager = new LaunchManager();
+  final MobileManager mobileManager = new MobileManager();
 
   ActivitySpinner _activitySpinner;
 
@@ -155,6 +157,7 @@ class Spark extends SparkModel implements FilesControllerDelegate {
 
     initSplitView();
     initSaveStatusListener();
+    initMobileManager();
 
     window.onFocus.listen((Event e) {
       // When the user switch to an other application, he might change the
@@ -359,6 +362,16 @@ class Spark extends SparkModel implements FilesControllerDelegate {
     });
   }
 
+  void initMobileManager() {
+    mobileManager.onMobileConnected.listen((MobileConnection connection) {
+      print('connected: ${connection}');
+    });
+
+    mobileManager.onMobileDisconnected.listen((MobileConnection connection) {
+      print('disconnected: ${connection}');
+    });
+  }
+
   void createActions() {
     _actionManager = new ActionManager();
 
@@ -382,6 +395,7 @@ class Spark extends SparkModel implements FilesControllerDelegate {
     actionManager.registerAction(new ResourceCloseAction(this));
     actionManager.registerAction(new FileDeleteAction(this, getDialogElement('#deleteDialog')));
     actionManager.registerAction(new FileExitAction(this));
+    actionManager.registerAction(new ListMobileDevicesAction(this));
 
     actionManager.registerKeyListener();
   }
@@ -1319,6 +1333,16 @@ class AboutSparkAction extends SparkActionWithDialog {
 
   void _commit() {
     // Nothing to do for this dialog.
+  }
+}
+
+class ListMobileDevicesAction extends SparkAction {
+  ListMobileDevicesAction(Spark spark) : super(spark, "list-devices", "List Devices") {
+    defaultBinding('ctrl-1');
+  }
+
+  _invoke([Object context]) {
+    spark.mobileManager.scanForDevices();
   }
 }
 

@@ -128,6 +128,7 @@ class SparkPolymer extends Spark {
 
     _bindButtonToAction('gitClone', 'git-clone');
     _bindButtonToAction('openFolder', 'folder-open');
+    _bindButtonToAction('mobileMobile', 'list-devices');
     _bindButtonToAction('runButton', 'application-run');
   }
 
