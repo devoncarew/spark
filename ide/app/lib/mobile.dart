@@ -309,13 +309,13 @@ class _AdbMessage {
     _writeInt32(bytes, data == null ? 0 : archive.getCrc32(data));
     _writeInt32(bytes, command ^ 0xFFFFFFFF);
 
-    return data;
+    return bytes;
   }
 
-  void _writeInt32(List<int> data, int val) {
-    data.add((val >> 24) & 0xFF);
-    data.add((val >> 16) & 0xFF);
-    data.add((val >>  8) & 0xFF);
-    data.add((val >>  0) & 0xFF);
+  void _writeInt32(List<int> bytes, int val) {
+    bytes.add((val >>  0) & 0xFF);
+    bytes.add((val >>  8) & 0xFF);
+    bytes.add((val >> 16) & 0xFF);
+    bytes.add((val >> 24) & 0xFF);
   }
 }
