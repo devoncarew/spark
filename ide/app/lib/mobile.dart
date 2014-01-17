@@ -9,8 +9,10 @@ library spark.mobile;
 
 import 'dart:async';
 
+import 'package:archive/archive.dart' as archive;
 import 'package:chrome/chrome_app.dart' as chrome;
 
+// Nexus 7: { "vendorId": 6353, "productId": 20034 }
 // Nexus 5: { "vendorId": 6353, "productId": 20194 }
 
 /**
@@ -21,12 +23,13 @@ class MobileManager {
   final int _ADB_INTERFACE_SUBCLASS = 66;
   final int _ADB_INTERFACE_ID = 1;
 
-  final List<MobileConnection> connections = [];
-
   final List<_DeviceInfo> _deviceInfos = [];
 
-  StreamController<MobileConnection> _connectController = new StreamController.broadcast();
-  StreamController<MobileConnection> _disconnectController = new StreamController.broadcast();
+  final List<MobileConnection> connections = [];
+
+  StreamController<MobileConnection> _controller = new StreamController.broadcast();
+
+  Timer _scanTimer;
 
   MobileManager() {
     // Get the list of permitted devices from the manifest.
@@ -44,21 +47,81 @@ class MobileManager {
   }
 
   /**
-   * Scan for and attempt to connect to new mobile devices.
-   *
-   * Generally this should only be called if there are no current connections.
+   * Start automatically scanning for devices to connect to. This will continue
+   * scanning until [dispose] is called.
    */
-  void scanForDevices() {
-    _DeviceInfo info = _deviceInfos.first;
+  void scanForDevicesContinuous() {
+    _keepScanning(new Duration(seconds: 3));
+  }
 
+  void _keepScanning(Duration duration) {
+    _scanTimer = new Timer(duration, () {
+      scanForDevicesOnce().then((connection) {
+        if (connection == null) {
+          _keepScanning(new Duration(seconds: 6));
+        }
+      });
+    });
+  }
+
+  /**
+   * Scan for and attempt to connect to new mobile devices. This will return the
+   * connection if a mobile device is found and `null` otherwise.
+   *
+   * This should only be called if there are no current connections.
+   */
+  Future<MobileConnection> scanForDevicesOnce() {
+    if (_deviceInfos.isEmpty) {
+      return new Future.value();
+    }
+
+    return _scanForDevices(_deviceInfos.toList());
+  }
+
+  Stream<MobileConnection> get onConnectionChange => _controller.stream;
+
+  void dispose() {
+    connections.forEach((connection) => connection.dispose());
+
+    if (_scanTimer != null) {
+      _scanTimer.cancel();
+      _scanTimer = null;
+    }
+  }
+
+  Future _scanForDevices(List devices) {
+    return _attemptConnect(devices.first).then((result) {
+      if (result != null) {
+        return result;
+      } else if (devices.length > 1) {
+        return _scanForDevices(devices.take(1));
+      } else {
+        return null;
+      }
+    }).catchError((e) {
+      if (devices.length > 1) {
+        return _scanForDevices(devices.take(1));
+      } else {
+        return null;
+      }
+    });
+  }
+
+  Future<MobileConnection> _attemptConnect(_DeviceInfo device) {
     var options = new chrome.EnumerateDevicesAndRequestAccessOptions(
-        vendorId: info.vendorId, productId: info.productId);
+        vendorId: device.vendorId, productId: device.productId);
 
-    chrome.usb.findDevices(options).then((List<chrome.ConnectionHandle> connections) {
+    return chrome.usb.findDevices(options).then((List<chrome.ConnectionHandle> connections) {
       if (connections.isNotEmpty) {
+        // Close the other n-1 devices.
+        if (connections.length > 1) {
+          connections.skip(1).forEach((conn) => chrome.usb.closeDevice(conn));
+        }
+
+        // Use the first connection.
         chrome.ConnectionHandle connection = connections.first;
 
-        chrome.usb.listInterfaces(connection).then((List<chrome.InterfaceDescriptor> interfaces) {
+        return chrome.usb.listInterfaces(connection).then((List<chrome.InterfaceDescriptor> interfaces) {
           bool foundDevice = false;
 
           for (chrome.InterfaceDescriptor interface in interfaces) {
@@ -66,38 +129,38 @@ class MobileManager {
                 interface.interfaceSubclass == _ADB_INTERFACE_SUBCLASS &&
                 interface.interfaceProtocol == _ADB_INTERFACE_ID) {
               foundDevice = true;
-              _claimInterface(connection, interface);
+              return _claimInterface(connection, interface);
             }
           }
 
           if (!foundDevice) {
             chrome.usb.closeDevice(connection);
           }
-        });
-      }
 
-      // Close the other n-1 devices.
-      if (connections.length > 1) {
-        connections.skip(1).forEach((conn) => chrome.usb.closeDevice(conn));
+          return null;
+        });
       }
     });
   }
 
-  Stream<MobileConnection> get onMobileConnected => _connectController.stream;
-
-  Stream<MobileConnection> get onMobileDisconnected => _disconnectController.stream;
-
-  void _claimInterface(chrome.ConnectionHandle connection, chrome.InterfaceDescriptor interface) {
-    chrome.usb.claimInterface(connection, interface.interfaceNumber).then((_) {
+  Future<MobileConnection> _claimInterface(chrome.ConnectionHandle connection, chrome.InterfaceDescriptor interface) {
+    return chrome.usb.claimInterface(connection, interface.interfaceNumber).then((_) {
       MobileConnection conn = new MobileConnection._(this, connection, interface);
       connections.add(conn);
-      _connectController.add(conn);
+      _controller.add(conn);
+      return conn;
     });
   }
 
   void _disposeConnection(MobileConnection connection) {
-    connections.remove(connection);
-    _disconnectController.add(connection);
+    if (connections.contains(connection)) {
+      connections.remove(connection);
+      _controller.add(null);
+
+      if (connections.isEmpty && _scanTimer != null) {
+        _keepScanning(new Duration(seconds: 6));
+      }
+    }
   }
 }
 
@@ -109,11 +172,63 @@ class MobileConnection {
   final chrome.ConnectionHandle usbConnection;
   final chrome.InterfaceDescriptor usbInterface;
 
-  MobileConnection._(this._manager, this.usbConnection, this.usbInterface);
+  chrome.EndpointDescriptor _inEndpoint;
+  chrome.EndpointDescriptor _outEndpoint;
 
-  bool amIHappy() {
-    // TODO:
+  MobileConnection._(this._manager, this.usbConnection, this.usbInterface) {
+    for (chrome.EndpointDescriptor endpoint in usbInterface.endpoints) {
+      if (endpoint.type == chrome.TransferType.BULK) {
+        if (endpoint.direction == chrome.Direction.IN) {
+          _inEndpoint = endpoint;
+        }
+        if (endpoint.direction == chrome.Direction.OUT) {
+          _outEndpoint = endpoint;
+        }
+      }
+    }
 
+    Timer.run(_connect);
+  }
+
+  void _connect() {
+    // TODO: send a connect
+    _AdbMessage message = new _AdbMessage(
+        command: _AdbMessage.A_CNXN,
+        arg0: _AdbMessage.A_VERSION,
+        arg1: _AdbMessage.MAX_PAYLOAD,
+        dataString: "host::\0");
+    _bulkSend(message.toBytes()).then((result) {
+      print(result);
+    }).catchError((e) {
+      print(e);
+    });
+
+    // TODO: listen for data coming back
+    _bulkReceive().then((chrome.TransferResultInfo result) {
+      print('result code: ${result.resultCode}');
+      print(result.data.getBytes());
+    }).catchError((e) {
+      print(e);
+    });
+
+    // TODO: dispose of myself if a connection fails
+
+  }
+
+  Future<chrome.TransferResultInfo> _bulkSend(List<int> data) {
+    var info = new chrome.GenericTransferInfo(
+        direction: chrome.Direction.OUT,
+        endpoint: _outEndpoint.address,
+        data: new chrome.ArrayBuffer.fromBytes(data));
+    return chrome.usb.bulkTransfer(usbConnection, info);
+  }
+
+  Future<chrome.TransferResultInfo> _bulkReceive() {
+    var info = new chrome.GenericTransferInfo(
+        direction: chrome.Direction.IN,
+        endpoint: _inEndpoint.address,
+        length: 4096);
+    return chrome.usb.bulkTransfer(usbConnection, info);
   }
 
   /**
@@ -123,6 +238,9 @@ class MobileConnection {
     return chrome.usb.releaseInterface(usbConnection, usbInterface.interfaceNumber).
         whenComplete(() => _manager._disposeConnection(this));
   }
+
+  String toString() =>
+      '[connection, vendor=${usbConnection.vendorId}, product=${usbConnection.productId}]';
 }
 
 class _DeviceInfo {
@@ -133,4 +251,71 @@ class _DeviceInfo {
   _DeviceInfo.fromMap(Map m) : vendorId = m['vendorId'], productId = m['productId'];
 
   String toString() => '[vendor=${vendorId}, product=${productId}]';
+}
+
+/*
+ * Common destination naming conventions include:
+ *
+ * "tcp:<host>:<port>" - host may be omitted to indicate localhost
+ * "udp:<host>:<port>" - host may be omitted to indicate localhost
+ * "local-dgram:<identifier>"
+ * "local-stream:<identifier>"
+ * "shell" - local shell service
+ * "upload" - service for pushing files across (like aproto's /sync)
+ * "fs-bridge" - FUSE protocol filesystem bridge
+ */
+
+class _AdbMessage {
+  static final int A_SYNC = 0x434e5953;
+  static final int A_CNXN = 0x4e584e43;
+  static final int A_AUTH = 0x48545541;
+  static final int A_OPEN = 0x4e45504f;
+  static final int A_OKAY = 0x59414b4f;
+  static final int A_CLSE = 0x45534c43;
+  static final int A_WRTE = 0x45545257;
+
+  // ADB protocol version
+  static final int A_VERSION = 0x01000000;
+  static final int MAX_PAYLOAD = 4096;
+
+  /*
+   * struct message {
+   *   unsigned command;       /* command identifier constant      */
+   *   unsigned arg0;          /* first argument                   */
+   *   unsigned arg1;          /* second argument                  */
+   *   unsigned data_length;   /* length of payload (0 is allowed) */
+   *   unsigned data_crc32;    /* crc32 of data payload            */
+   *   unsigned magic;         /* command ^ 0xffffffff             */
+   * };
+   */
+  int command = 0;
+  int arg0 = 0;
+  int arg1 = 0;
+  List<int> data;
+
+  _AdbMessage({this.command, this.arg0, this.arg1, this.data, String dataString}) {
+    if (dataString != null) {
+      data = '${dataString}\0'.codeUnits;
+    }
+  }
+
+  List<int> toBytes() {
+    var bytes = [];
+
+    _writeInt32(bytes, command);
+    _writeInt32(bytes, arg0);
+    _writeInt32(bytes, arg1);
+    _writeInt32(bytes, data == null ? 0 : data.length);
+    _writeInt32(bytes, data == null ? 0 : archive.getCrc32(data));
+    _writeInt32(bytes, command ^ 0xFFFFFFFF);
+
+    return data;
+  }
+
+  void _writeInt32(List<int> data, int val) {
+    data.add((val >> 24) & 0xFF);
+    data.add((val >> 16) & 0xFF);
+    data.add((val >>  8) & 0xFF);
+    data.add((val >>  0) & 0xFF);
+  }
 }
