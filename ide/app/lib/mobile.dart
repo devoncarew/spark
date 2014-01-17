@@ -197,10 +197,10 @@ class MobileConnection {
         arg0: _AdbMessage.A_VERSION,
         arg1: _AdbMessage.MAX_PAYLOAD,
         dataString: "host::\0");
-    _bulkSend(message.toBytes()).then((result) {
+    _bulkSend(message.toBytes()).then((chrome.TransferResultInfo result) {
       print(result);
     }).catchError((e) {
-      print(e);
+      print('error from _bulkSend(): ${e}');
     });
 
     // TODO: listen for data coming back
@@ -208,7 +208,7 @@ class MobileConnection {
       print('result code: ${result.resultCode}');
       print(result.data.getBytes());
     }).catchError((e) {
-      print(e);
+      print('error from _bulkReceive(): ${e}');
     });
 
     // TODO: dispose of myself if a connection fails
