@@ -10,7 +10,15 @@ library spark.scm;
 
 import 'dart:async';
 
+import 'package:chrome/chrome_app.dart' as chrome;
+
 import 'workspace.dart';
+import 'git/objectstore.dart';
+import 'git/options.dart';
+import 'git/commands/branch.dart';
+import 'git/commands/checkout.dart';
+import 'git/commands/clone.dart';
+import 'git/commands/commit.dart';
 
 final List<ScmProvider> _providers = [new GitScmProvider()];
 
@@ -68,6 +76,11 @@ abstract class ScmProvider {
    * Return the [ScmProjectOperations] cooresponding to the given [Project].
    */
   ScmProjectOperations getOperationsFor(Project project);
+
+  /**
+   * Clone the repo at the given url into the given directory.
+   */
+  Future clone(String url, chrome.DirectoryEntry dir);
 }
 
 /**
@@ -79,10 +92,22 @@ abstract class ScmProjectOperations {
 
   ScmProjectOperations(this.provider, this.project);
 
+  chrome.DirectoryEntry get entry => project.entry;
+
   /**
    * Return the SCM status for the given file or folder.
    */
   Future<FileStatus> getFileStatus(Resource resource);
+
+  Future<String> getBranchName();
+
+  Future<List<String>> getAllBranchNames();
+
+  Future createBranch(String branchName);
+
+  Future checkoutBranch(String branchName);
+
+  Future commit(String commitMessage);
 }
 
 /**
@@ -123,18 +148,67 @@ class GitScmProvider extends ScmProvider {
 
     return _operations[project];
   }
+
+  Future clone(String url, chrome.DirectoryEntry dir) {
+    GitOptions options = new GitOptions(
+        root: dir, repoUrl: url, depth: 1, store: new ObjectStore(dir));
+
+    return options.store.init().then((_) {
+      Clone clone = new Clone(options);
+      return clone.clone();
+    });
+  }
 }
 
 /**
  * The Git SCM project operations implementation.
  */
 class GitScmProjectOperations extends ScmProjectOperations {
+  ObjectStore _objectStore;
+  Completer<ObjectStore> _objectStoreCompleter = new Completer();
 
   GitScmProjectOperations(ScmProvider provider, Project project) :
-    super(provider, project);
+    super(provider, project) {
+
+    _objectStore = new ObjectStore(project.entry);
+    _objectStore.init()
+      .then((_) => _objectStoreCompleter.complete(_objectStore))
+      .catchError((e) => _objectStoreCompleter.completeError(e));
+  }
+
+  Future<ObjectStore> getObjectStore() => _objectStoreCompleter.future;
 
   Future<FileStatus> getFileStatus(Resource resource) {
-    // TODO: how to retrieve the git file status?
     return new Future.error('unimplemented - getFileStatus()');
+  }
+
+  Future<String> getBranchName() =>
+      getObjectStore().then((store) => store.getCurrentBranch());
+
+  Future<List<String>> getAllBranchNames() =>
+      getObjectStore().then((store) => store.getLocalBranches());
+
+  Future createBranch(String branchName) {
+    return getObjectStore().then((store) {
+      GitOptions options = new GitOptions(
+          root: entry, branchName: branchName, store: store);
+      return Branch.branch(options);
+    });
+  }
+
+  Future checkoutBranch(String branchName) {
+    return getObjectStore().then((store) {
+      GitOptions options = new GitOptions(
+          root: entry, branchName: branchName, store: store);
+      return Checkout.checkout(options);
+    });
+  }
+
+  Future commit(String commitMessage) {
+    return getObjectStore().then((store) {
+      GitOptions options = new GitOptions(
+          root: entry, store: store, commitMessage: commitMessage);
+      return Commit.commit(options);
+    });
   }
 }
