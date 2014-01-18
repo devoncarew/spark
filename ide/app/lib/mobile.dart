@@ -8,8 +8,9 @@
 library spark.mobile;
 
 import 'dart:async';
+import 'dart:convert';
+import 'dart:typed_data';
 
-import 'package:archive/archive.dart' as archive;
 import 'package:chrome/chrome_app.dart' as chrome;
 
 // Nexus 7: { "vendorId": 6353, "productId": 20034 }
@@ -198,15 +199,16 @@ class MobileConnection {
         arg1: _AdbMessage.MAX_PAYLOAD,
         dataString: "host::\0");
     _bulkSend(message.toBytes()).then((chrome.TransferResultInfo result) {
-      print(result);
+      print('connect(): result code: ${result.resultCode}');
     }).catchError((e) {
-      print('error from _bulkSend(): ${e}');
+      print('connect(): error from _bulkSend(): ${e}');
     });
 
     // TODO: listen for data coming back
     _bulkReceive().then((chrome.TransferResultInfo result) {
-      print('result code: ${result.resultCode}');
+      print('_bulkReceive(): result code: ${result.resultCode}');
       print(result.data.getBytes());
+      print(UTF8.decode(result.data.getBytes(), allowMalformed: true));
     }).catchError((e) {
       print('error from _bulkReceive(): ${e}');
     });
@@ -227,7 +229,7 @@ class MobileConnection {
     var info = new chrome.GenericTransferInfo(
         direction: chrome.Direction.IN,
         endpoint: _inEndpoint.address,
-        length: 4096);
+        length: 24);
     return chrome.usb.bulkTransfer(usbConnection, info);
   }
 
@@ -276,6 +278,7 @@ class _AdbMessage {
 
   // ADB protocol version
   static final int A_VERSION = 0x01000000;
+  static final int HEADER_SIZE = 24;
   static final int MAX_PAYLOAD = 4096;
 
   /*
@@ -300,22 +303,36 @@ class _AdbMessage {
   }
 
   List<int> toBytes() {
-    var bytes = [];
+    ByteData bytes = new ByteData(HEADER_SIZE);
 
-    _writeInt32(bytes, command);
-    _writeInt32(bytes, arg0);
-    _writeInt32(bytes, arg1);
-    _writeInt32(bytes, data == null ? 0 : data.length);
-    _writeInt32(bytes, data == null ? 0 : archive.getCrc32(data));
-    _writeInt32(bytes, command ^ 0xFFFFFFFF);
+    bytes.setUint32(0, command, Endianness.LITTLE_ENDIAN);
+    bytes.setUint32(4, arg0, Endianness.LITTLE_ENDIAN);
+    bytes.setUint32(8, arg1, Endianness.LITTLE_ENDIAN);
+    bytes.setUint32(12, data == null ? 0 : data.length, Endianness.LITTLE_ENDIAN);
+    bytes.setUint32(16, data == null ? 0 : _checksum(data), Endianness.LITTLE_ENDIAN);
+    bytes.setUint32(20, command ^ 0xFFFFFFFF, Endianness.LITTLE_ENDIAN);
 
-    return bytes;
+    List<int> result = [];
+    result.addAll(new Uint8List.view(bytes.buffer));
+
+    if (data != null) {
+      result.addAll(data);
+    }
+
+    return result;
   }
 
-  void _writeInt32(List<int> bytes, int val) {
-    bytes.add((val >>  0) & 0xFF);
-    bytes.add((val >>  8) & 0xFF);
-    bytes.add((val >> 16) & 0xFF);
-    bytes.add((val >> 24) & 0xFF);
+  // ByteData
+
+  int _checksum(List<int> data) {
+    int result = 0;
+
+    for (int i = 0; i < data.length; i++) {
+      int x = data[i];
+      if (x < 0) x += 256;
+      result += x;
+    }
+
+    return result;
   }
 }
