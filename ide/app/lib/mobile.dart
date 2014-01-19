@@ -202,16 +202,27 @@ class MobileConnection {
     _bulkSend(message);
 
     // TODO: listen for data coming back
-    _bulkReceive().then((chrome.TransferResultInfo result) {
-      print('_bulkReceive(): result code: ${result.resultCode}');
+    // TODO: create a stream of incoming events, listen for them
+    // TODO: set up a state machine to get the the connection handshake
+
+    _printResponse(_bulkReceive()).then((_) {
+      _printResponse(_bulkReceive()).then((_) {
+        _printResponse(_bulkReceive());
+      });
+    });
+
+    // TODO: dispose of myself if a connection fails
+
+  }
+
+  Future _printResponse(Future<chrome.TransferResultInfo> future) {
+    return future.then((chrome.TransferResultInfo result) {
+      print('<== result code: ${result.resultCode}');
       print(result.data.getBytes());
       print('[' + UTF8.decode(result.data.getBytes(), allowMalformed: true) + ']');
     }).catchError((e) {
       print('error from _bulkReceive(): ${e}');
     });
-
-    // TODO: dispose of myself if a connection fails
-
   }
 
   _bulkSend(_AdbMessage message) {
@@ -221,7 +232,7 @@ class MobileConnection {
         data: new chrome.ArrayBuffer.fromBytes(message.getHeaderBytes()));
 
     chrome.usb.bulkTransfer(usbConnection, info).then((chrome.TransferResultInfo result) {
-      print('_bulkSend() result code: ${result.resultCode}');
+      print('==> result code: ${result.resultCode}');
     }).catchError((e) {
       print('error from _bulkSend(): ${e}');
     });
@@ -233,7 +244,7 @@ class MobileConnection {
           data: new chrome.ArrayBuffer.fromBytes(message.data));
 
       chrome.usb.bulkTransfer(usbConnection, info).then((chrome.TransferResultInfo result) {
-        print('_bulkSend() result code: ${result.resultCode}');
+        print('==> result code: ${result.resultCode}');
       }).catchError((e) {
         print('error from _bulkSend(): ${e}');
       });
