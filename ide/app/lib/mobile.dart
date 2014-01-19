@@ -198,17 +198,14 @@ class MobileConnection {
         arg0: _AdbMessage.A_VERSION,
         arg1: _AdbMessage.MAX_PAYLOAD,
         dataString: "host::\0");
-    _bulkSend(message.toBytes()).then((chrome.TransferResultInfo result) {
-      print('connect(): result code: ${result.resultCode}');
-    }).catchError((e) {
-      print('connect(): error from _bulkSend(): ${e}');
-    });
+
+    _bulkSend(message);
 
     // TODO: listen for data coming back
     _bulkReceive().then((chrome.TransferResultInfo result) {
       print('_bulkReceive(): result code: ${result.resultCode}');
       print(result.data.getBytes());
-      print(UTF8.decode(result.data.getBytes(), allowMalformed: true));
+      print('[' + UTF8.decode(result.data.getBytes(), allowMalformed: true) + ']');
     }).catchError((e) {
       print('error from _bulkReceive(): ${e}');
     });
@@ -217,19 +214,37 @@ class MobileConnection {
 
   }
 
-  Future<chrome.TransferResultInfo> _bulkSend(List<int> data) {
+  _bulkSend(_AdbMessage message) {
     var info = new chrome.GenericTransferInfo(
         direction: chrome.Direction.OUT,
         endpoint: _outEndpoint.address,
-        data: new chrome.ArrayBuffer.fromBytes(data));
-    return chrome.usb.bulkTransfer(usbConnection, info);
+        data: new chrome.ArrayBuffer.fromBytes(message.getHeaderBytes()));
+
+    chrome.usb.bulkTransfer(usbConnection, info).then((chrome.TransferResultInfo result) {
+      print('_bulkSend() result code: ${result.resultCode}');
+    }).catchError((e) {
+      print('error from _bulkSend(): ${e}');
+    });
+
+    if (message.data != null) {
+      info = new chrome.GenericTransferInfo(
+          direction: chrome.Direction.OUT,
+          endpoint: _outEndpoint.address,
+          data: new chrome.ArrayBuffer.fromBytes(message.data));
+
+      chrome.usb.bulkTransfer(usbConnection, info).then((chrome.TransferResultInfo result) {
+        print('_bulkSend() result code: ${result.resultCode}');
+      }).catchError((e) {
+        print('error from _bulkSend(): ${e}');
+      });
+    }
   }
 
   Future<chrome.TransferResultInfo> _bulkReceive() {
     var info = new chrome.GenericTransferInfo(
         direction: chrome.Direction.IN,
         endpoint: _inEndpoint.address,
-        length: 24);
+        length: _inEndpoint.maximumPacketSize);
     return chrome.usb.bulkTransfer(usbConnection, info);
   }
 
@@ -302,7 +317,7 @@ class _AdbMessage {
     }
   }
 
-  List<int> toBytes() {
+  List<int> getHeaderBytes() {
     ByteData bytes = new ByteData(HEADER_SIZE);
 
     bytes.setUint32(0, command, Endianness.LITTLE_ENDIAN);
@@ -312,14 +327,7 @@ class _AdbMessage {
     bytes.setUint32(16, data == null ? 0 : _checksum(data), Endianness.LITTLE_ENDIAN);
     bytes.setUint32(20, command ^ 0xFFFFFFFF, Endianness.LITTLE_ENDIAN);
 
-    List<int> result = [];
-    result.addAll(new Uint8List.view(bytes.buffer));
-
-    if (data != null) {
-      result.addAll(data);
-    }
-
-    return result;
+    return new Uint8List.view(bytes.buffer);
   }
 
   // ByteData
