@@ -12,7 +12,7 @@ import 'package:bootjack/bootjack.dart' as bootjack;
 import 'package:chrome/chrome_app.dart' as chrome;
 import 'package:logging/logging.dart';
 import 'package:path/path.dart' as path;
-import 'package:tavern/tavern.dart' as tavern;
+//import 'package:tavern/tavern.dart' as tavern;
 
 // BUG(ussuri): https://github.com/dart-lang/spark/issues/500
 import 'packages/spark_widgets/spark_status/spark_status.dart';
@@ -2158,14 +2158,14 @@ class PubGetJob extends Job {
 
   Future run(ProgressMonitor monitor) {
     monitor.start(name, 1);
-    return _pubspec.entry.getParent().then((parent) {
-      tavern.getDependencies(parent, null).then((value) {
-   //     Logger.root.log(Level.INFO, "pub get", value);
-      });
-    });
+    return new Future.value();
+//    return _pubspec.entry.getParent().then((parent) {
+//      tavern.getDependencies(parent, null).then((value) {
+//   //     Logger.root.log(Level.INFO, "pub get", value);
+//      });
+//    });
   }
 }
-
 
 class ResourceRefreshJob extends Job {
   final List<ws.Project> resources;

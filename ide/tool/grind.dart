@@ -98,20 +98,19 @@ void deploy(GrinderContext context) {
   Directory deployWeb = joinDir(destDir, ['web']);
 
   // Compile the main Spark app.
-  _dart2jsCompile(context, deployWeb,
-      'spark_polymer.html_bootstrap.dart', true);
+  _dart2jsCompile(context, deployWeb, 'spark_polymer.html_bootstrap.dart', true);
 
   // Compile the services entry-point.
   _dart2jsCompile(context, deployWeb, 'services_entry.dart', true);
 
-  if (Platform.isWindows) {
-    context.log(
-        'TODO: manually patch ${destDir.path}/web/packages/shadow_dom/shadow_dom.debug.js tool/shadow_dom.patch');
-  } else {
-    _runCommandSync(
-        context,
-        'patch ${destDir.path}/web/packages/shadow_dom/shadow_dom.debug.js tool/shadow_dom.patch');
-  }
+//  if (Platform.isWindows) {
+//    context.log(
+//        'TODO: manually patch ${destDir.path}/web/packages/shadow_dom/shadow_dom.debug.js tool/shadow_dom.patch');
+//  } else {
+//    _runCommandSync(
+//        context,
+//        'patch ${destDir.path}/web/packages/shadow_dom/shadow_dom.debug.js tool/shadow_dom.patch');
+//  }
 }
 
 // Creates a release build to be uploaded to Chrome Web Store.
@@ -359,8 +358,8 @@ void _dart2jsCompile(GrinderContext context, Directory target, String filePath,
       arguments: [
         joinDir(target, [filePath]).path,
         '--package-root=packages',
-        '--suppress-warnings',
-        '--suppress-hints',
+//        '--suppress-warnings',
+//        '--suppress-hints',
         '--out=' + joinDir(target, ['${filePath}.js']).path
       ],
       environment: {

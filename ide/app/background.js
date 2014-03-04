@@ -30,19 +30,19 @@ App.prototype.launch = function(ui_opt) {
     delete this.editorWin_;
   }
 
-  var div = document.createElement('div');
-  if (div.createShadowRoot == null) {
-    chrome.app.window.create(
-        'cannot_launch/cannot_launch.htm', {
-        frame: 'chrome',
-        bounds: {
-          width: 500,
-          height: 160
-        },
-        resizable: false
-    });
-    return;
-  }
+//  var div = document.createElement('div');
+//  if (div.createShadowRoot == null) {
+//    chrome.app.window.create(
+//        'cannot_launch/cannot_launch.htm', {
+//        frame: 'chrome',
+//        bounds: {
+//          width: 500,
+//          height: 160
+//        },
+//        resizable: false
+//    });
+//    return;
+//  }
 
   this.editorWin_ = new EditorWindow(this);
 }

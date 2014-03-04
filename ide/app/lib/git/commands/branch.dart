@@ -28,11 +28,11 @@ class Branch {
   static const BRANCH_PATTERN
       = r"^(?!/|\.|.* ([/.]\.|//|@\{|\\\\))[^\\x00-\\x20 ~^:?*\[]+(?<!\.lock|[/.])$";
 
-  static bool _verifyBranchName(String name) {
-    var length = name.length;
-    var branchRegex = new RegExp(BRANCH_PATTERN);
-    return name.isNotEmpty && name.matchAsPrefix(name).groupCount;
-  }
+//  static bool _verifyBranchName(String name) {
+//    var length = name.length;
+//    var branchRegex = new RegExp(BRANCH_PATTERN);
+//    return name.isNotEmpty && name.matchAsPrefix(name).groupCount;
+//  }
 
   /**
    * Creates a new branch. Throws error if the branch already exist.
