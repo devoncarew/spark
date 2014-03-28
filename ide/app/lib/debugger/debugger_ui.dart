@@ -31,10 +31,8 @@ class DebuggerUI {
     div.style.zIndex = '100';
     div.style.position = 'fixed';
     div.style.top = '0';
-    div.style.padding = '0.5em';
     div.style.left = '200px';
     div.style.right = '200px';
-    div.style.background = 'rgb(130, 130, 130)';
 
     DivElement buttons = new DivElement();
     buttons.style.padding = '0.5em';
@@ -43,7 +41,7 @@ class DebuggerUI {
     div.nodes.add(buttons);
 
     DivElement console = new DivElement();
-    console.style.padding = '0 0.5em';
+    console.style.padding = '0 0.5em 0.25em 0.5em';
     console.style.background = 'rgb(84, 180, 84)';
     console.style.borderRadius = '2px';
     console.style.textOverflow = 'ellipsis';

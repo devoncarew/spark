@@ -56,6 +56,7 @@ class TextEditor extends Editor {
   void setSession(ace.EditSession value) {
     _session = value;
     _aceSubscription = _session.onChange.listen((_) => dirty = true);
+    _session.setBreakpoint(7);
   }
 
   bool get dirty => _dirty;
