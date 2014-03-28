@@ -24,6 +24,11 @@ import 'lib/app.dart';
 import 'lib/apps/app_utils.dart';
 import 'lib/builder.dart';
 import 'lib/dart/dart_builder.dart';
+import 'lib/debugger/chrome_connection.dart';
+import 'lib/debugger/debugger.dart';
+import 'lib/debugger/debugger_ui.dart';
+import 'lib/debugger/debugger_wip.dart';
+import 'lib/debugger/wip.dart';
 import 'lib/editors.dart';
 import 'lib/editor_area.dart';
 import 'lib/event_bus.dart';
@@ -104,6 +109,7 @@ class Spark extends SparkModel implements FilesControllerDelegate,
   EditorArea _editorArea;
   LaunchManager _launchManager;
   PubManager _pubManager;
+  DebuggerManager debuggerManager = new DebuggerManager();
 
   final EventBus eventBus = new EventBus();
 
@@ -161,6 +167,8 @@ class Spark extends SparkModel implements FilesControllerDelegate,
 
     // Add a Dart builder.
     addBuilder(new DartBuilder(this.services));
+
+    DebuggerUI.listenTo(debuggerManager);
   }
 
   initServices() {
@@ -384,6 +392,7 @@ class Spark extends SparkModel implements FilesControllerDelegate,
     actionManager.registerAction(new GitCommitAction(this, getDialogElement("#gitCommitDialog")));
     actionManager.registerAction(new GitRevertChangesAction(this));
     actionManager.registerAction(new GitPushAction(this, getDialogElement("#gitPushDialog")));
+    actionManager.registerAction(new DebuggerTestAction(this));
     actionManager.registerAction(new RunTestsAction(this));
     actionManager.registerAction(new SettingsAction(this, getDialogElement('#settingsDialog')));
     actionManager.registerAction(new AboutSparkAction(this, getDialogElement('#aboutDialog')));
@@ -2525,6 +2534,30 @@ class SettingsAction extends SparkActionWithDialog {
           getElement('#directory-label').text = path;
         });
       });
+    });
+  }
+}
+
+class DebuggerTestAction extends SparkAction {
+  DebuggerTestAction(Spark spark) :
+      super(spark, "debugger-connect", "Connect Debugger");
+
+  void _invoke([Object context]) {
+    ChromeConnection connection = new ChromeConnection('localhost', 1234);
+
+    connection.getTabs().then((tabs) {
+      connectTo(tabs.firstWhere((tab) => !tab.isBackgroundPage));
+    }).catchError((e) {
+      print('no tabs available: ${e}');
+    });
+  }
+
+  void connectTo(ChromeTab tab) {
+    WipConnection.connect(tab.webSocketDebuggerUrl).then((WipConnection connection) {
+      print(connection);
+
+      WipDebuggerConnection debuggerConnection = new WipDebuggerConnection(connection);
+      spark.debuggerManager.addConnection(debuggerConnection);
     });
   }
 }
