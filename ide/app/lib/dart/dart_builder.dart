@@ -12,8 +12,9 @@ import '../builder.dart';
 import '../jobs.dart';
 import '../services.dart';
 import '../workspace.dart';
+import '../../spark_flags.dart';
 
-final _disableDartAnalyzer = false;
+final _disableDartAnalyzer = !SparkFlags.performDartAnalysis;
 
 Logger _logger = new Logger('spark.dart_builder');
 

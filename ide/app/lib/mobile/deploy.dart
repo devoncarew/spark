@@ -36,7 +36,7 @@ class DeviceInfo {
  * A class to encapsulate deploying an application to a mobile device.
  */
 class MobileDeploy {
-  static bool isAvailable() => chrome.usb.available;
+  static bool isAvailable() => chrome.usb.avilable;
 
   final Container appContainer;
   final PreferenceStore _prefs;

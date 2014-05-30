@@ -32,6 +32,8 @@ class SparkFlags {
     _flags['show-files-view'] = value;
   }
 
+  static bool get performDartAnalysis => _flags['analyze-dart'] == true;
+
   static bool get showGitSupport => _flags['show-git-support'] == true;
 
   static void setFlags(Map<String, dynamic> newFlags) {
@@ -79,10 +81,18 @@ class SparkFlags {
   }
 
   static Future _demoInit() {
-    return getAppContents('packages/git/git.dart').then((_) {
+    Future f1 = getAppContents('packages/git/git.dart').then((_) {
       _flags['show-git-support'] = true;
     }).catchError((e) {
       _flags['show-git-support'] = false;
     });
+
+    Future f2 = getAppContents('lib/dart/spark_analysis.dart').then((_) {
+      _flags['analyze-dart'] = true;
+    }).catchError((e) {
+      _flags['analyze-dart'] = false;
+    });
+
+    return Future.wait([f1, f2]);
   }
 }

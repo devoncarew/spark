@@ -214,7 +214,7 @@ class DartEditor extends TextEditor {
   DartEditor._create(AceManager aceManager, workspace.File file,
       SparkPreferences prefs) : super._create(aceManager, file, prefs);
 
-  bool get supportsOutline => true;
+  bool get supportsOutline => SparkFlags.performDartAnalysis;
 
   @override
   void activate() {
