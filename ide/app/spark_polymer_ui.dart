@@ -30,6 +30,8 @@ class SparkPolymerUI extends SparkWidget {
   @observable bool useAceThemes = true;
   @observable bool showWipProjectTemplates = true;
   @observable bool chromeOS = true;
+  @observable bool showGitSupport = true;
+  @observable bool showFilesView = true;
 
   @observable bool showNoFileFilterMatches = false;
 
@@ -61,6 +63,20 @@ class SparkPolymerUI extends SparkWidget {
     useAceThemes = SparkFlags.useAceThemes;
     showWipProjectTemplates = SparkFlags.showWipProjectTemplates;
     chromeOS = PlatformInfo.isCros;
+    showGitSupport = SparkFlags.showGitSupport;
+    showFilesView = SparkFlags.showFilesView;
+
+//    // TODO:
+//    print('SparkFlags.showFilesView=${SparkFlags.showFilesView}');
+//
+//    if (SparkFlags.showFilesView) {
+//      _splitView.targetSize = 300;
+//    } else {
+//      _splitView.minTargetSize = 0;
+//      _splitView.targetSize = 0;
+//      _splitView.targetSizeChanged();
+//      print('_splitView.targetSize=${_splitView.targetSize}');
+//    }
 
     // This propagates external changes down to the enclosed widgets.
     Observable.dirtyCheck();

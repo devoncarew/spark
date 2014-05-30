@@ -7,6 +7,8 @@ library spark.flags;
 import 'dart:async';
 import 'dart:convert' show JSON;
 
+import 'lib/utils.dart';
+
 /**
  * Stores global developer flags.
  */
@@ -24,6 +26,13 @@ class SparkFlags {
   static bool get showGitPull => _flags['show-git-pull'] == true;
   static bool get showGitBranch => _flags['show-git-branch'] == true;
   static bool get performJavaScriptAnalysis => _flags['analyze-javascript'] == true;
+
+  static bool get showFilesView => _flags['show-files-view'] == true;
+  static set showFilesView(bool value) {
+    _flags['show-files-view'] = value;
+  }
+
+  static bool get showGitSupport => _flags['show-git-support'] == true;
 
   static void setFlags(Map<String, dynamic> newFlags) {
     if (newFlags != null) _flags.addAll(newFlags);
@@ -51,6 +60,8 @@ class SparkFlags {
       for (final flags in multiFlags) {
         setFlags(flags);
       }
+    }).then((_) {
+      return _demoInit();
     });
   }
 
@@ -64,6 +75,14 @@ class SparkFlags {
     }).catchError((_) {
       // The JSON file is non-existent or invalid.
       return null;
+    });
+  }
+
+  static Future _demoInit() {
+    return getAppContents('packages/git/git.dart').then((_) {
+      _flags['show-git-support'] = true;
+    }).catchError((e) {
+      _flags['show-git-support'] = false;
     });
   }
 }

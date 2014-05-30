@@ -32,67 +32,73 @@
         on-update="{{onSplitterUpdate}}">
       <div beforeSplit>
         <spark-toolbar class="toolbar" horizontal justify="spaced">
-          <input type="fileFilter"
-              id="fileFilter"
-              placeholder="Filter"
-              on-keydown="{{fileFilterKeydownHandler}}"
-              on-input="{{fileFilterInputHandler}}"
-              tabindex="0"/>
+          <template if="{{showFilesView}}">
+            <input type="fileFilter"
+                id="fileFilter"
+                placeholder="Filter"
+                on-keydown="{{fileFilterKeydownHandler}}"
+                on-input="{{fileFilterInputHandler}}"
+                tabindex="0"/>
+          </template>
 
           <spark-button id="runButton" flat round noPadding>
             <i class="glyphicon glyphicon-play"></i>
           </spark-button>
 
-          <spark-menu-button
-              id="mainMenu"
-              valueAttr="action-id"
-              arrow="none"
-              on-activate="{{onMenuSelected}}">
+          <template if="{{showGitSupport}}">
+            <spark-menu-button
+                id="mainMenu"
+                valueAttr="action-id"
+                arrow="none"
+                on-activate="{{onMenuSelected}}">
 
-            <spark-button flat round noPadding menuButton>
-              <img src="images/overflow.png">
-            </spark-button>
+              <spark-button flat round noPadding menuButton>
+                <img src="images/overflow.png">
+              </spark-button>
 
-            <spark-menu-item action-id="project-new" label="New Project...">
-            </spark-menu-item>
-
-            <spark-menu-separator></spark-menu-separator>
-
-            <spark-menu-item action-id="file-open" label="Open File...">
-            </spark-menu-item>
-            <spark-menu-item action-id="folder-open" label="Open Folder...">
-            </spark-menu-item>
-            <spark-menu-item action-id="git-clone" label="Git Clone...">
-            </spark-menu-item>
-
-            <spark-menu-separator></spark-menu-separator>
-
-            <spark-menu-item action-id="application-run" label="Run Application">
-            </spark-menu-item>
-            <spark-menu-item action-id="application-push" label="Deploy to Mobile...">
-            </spark-menu-item>
-            <spark-menu-item action-id="webstore-publish" label="Publish to Chrome Web Store...">
-            </spark-menu-item>
-
-            <template if="{{developerMode}}">
-              <spark-menu-separator></spark-menu-separator>
-              <spark-menu-item action-id="run-tests" label="Run Tests">
+              <spark-menu-item action-id="project-new" label="New Project...">
               </spark-menu-item>
-            </template>
 
-            <spark-menu-separator></spark-menu-separator>
+              <spark-menu-separator></spark-menu-separator>
 
-            <spark-menu-item action-id="settings" label="Settings...">
-            </spark-menu-item>
-            <spark-menu-item action-id="send-feedback" label="Send Feedback...">
-            </spark-menu-item>
-            <spark-menu-item action-id="help-about" label="About Spark">
-            </spark-menu-item>
+              <spark-menu-item action-id="file-open" label="Open File...">
+              </spark-menu-item>
+              <spark-menu-item action-id="folder-open" label="Open Folder...">
+              </spark-menu-item>
+              <spark-menu-item action-id="git-clone" label="Git Clone...">
+              </spark-menu-item>
 
-          </spark-menu-button>
+              <spark-menu-separator></spark-menu-separator>
+
+              <spark-menu-item action-id="application-run" label="Run Application">
+              </spark-menu-item>
+              <spark-menu-item action-id="application-push" label="Deploy to Mobile...">
+              </spark-menu-item>
+              <spark-menu-item action-id="webstore-publish" label="Publish to Chrome Web Store...">
+              </spark-menu-item>
+
+              <template if="{{developerMode}}">
+                <spark-menu-separator></spark-menu-separator>
+                <spark-menu-item action-id="run-tests" label="Run Tests">
+                </spark-menu-item>
+              </template>
+
+              <spark-menu-separator></spark-menu-separator>
+
+              <spark-menu-item action-id="settings" label="Settings...">
+              </spark-menu-item>
+              <spark-menu-item action-id="send-feedback" label="Send Feedback...">
+              </spark-menu-item>
+              <spark-menu-item action-id="help-about" label="About Spark">
+              </spark-menu-item>
+
+            </spark-menu-button>
+          </template>
         </spark-toolbar>
 
-        <content select="#fileViewArea"></content>
+        <template if="{{showFilesView}}">
+          <content select="#fileViewArea"></content>
+        </template>
 
         <template if="{{showNoFileFilterMatches}}">
           <div id="fileNotFoundPlaceholder">

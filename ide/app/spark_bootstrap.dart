@@ -28,6 +28,7 @@ import 'package:spark_widgets/spark_toolbar/spark_toolbar.dart';
 
 import 'lib/utils.dart';
 import 'lib/ui/polymer/commit_message_view/commit_message_view.dart';
+import 'lib/ui/polymer/files_view/files_view.dart';
 import 'lib/ui/polymer/goto_line_view/goto_line_view.dart';
 import 'spark_polymer_ui.dart';
 import 'spark_polymer.dart' as spark_polymer;
@@ -58,6 +59,7 @@ void main() {
   Polymer.register('spark-status', SparkStatus);
   Polymer.register('spark-toolbar', SparkToolbar);
   Polymer.register('commit-message-view', CommitMessageView);
+  Polymer.register('files-view', FilesView);
   Polymer.register('goto-line-view', GotoLineView);
   Polymer.register('spark-polymer-ui', SparkPolymerUI);
 
