@@ -1179,7 +1179,13 @@ abstract class SparkActionWithDialog extends SparkAction {
       : super(spark, id, name) {
     _dialog = spark.createDialog(dialogElement);
     _dialog.element.querySelector("[primary]").onClick.listen((_) => _commit());
+
+    if (_cancelButton != null) {
+      _cancelButton.onClick.listen((_) => _cancel());
+    }
   }
+
+  SparkButton get _cancelButton => getElement("[cancel]");
 
   void _commit() => _hide();
   void _cancel() => _hide();
