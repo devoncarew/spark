@@ -6,8 +6,6 @@ library spark.dart_builder;
 
 import 'dart:async';
 
-import 'package:logging/logging.dart';
-
 import '../builder.dart';
 import '../jobs.dart';
 import '../services.dart';
@@ -15,8 +13,6 @@ import '../workspace.dart';
 import '../../spark_flags.dart';
 
 final _disableDartAnalyzer = !SparkFlags.performDartAnalysis;
-
-Logger _logger = new Logger('spark.dart_builder');
 
 /**
  * A [Builder] implementation that drives the Dart analyzer.

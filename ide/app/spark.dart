@@ -157,12 +157,28 @@ abstract class Spark
     addBuilder(new JsonBuilder());
 
     return restoreWorkspace().then((_) {
+      _earlyAnalysis();
+
       return restoreLocationManager().then((_) {
         // Location manager might have overridden the Ace-related flags from
         // "<project location>/.spark.json".
         initAceManagers();
       });
     });
+  }
+
+  void _earlyAnalysis() {
+    if (SparkFlags.performDartAnalysis && SparkFlags.startAnalysisEarly) {
+      new Future.delayed(new Duration(seconds: 2), () {
+        ws.Resource resource = workspace.getChild('ide');
+        if (resource is ws.Project) {
+          AnalyzerService analyzer = services.getService("analyzer");
+          return analyzer.createProjectAnalyzer(resource);
+        }
+      }).then((_) {
+        print('finished analysis');
+      });
+    }
   }
 
   //
@@ -817,13 +833,11 @@ abstract class Spark
   }
 
   void _refreshOpenFiles() {
-    // In order to scope how much work we do when Spark re-gains focus, we do
-    // not refresh the entire workspace or even the active projects. We refresh
-    // the currently opened files and their parent containers. This lets us
-    // capture changed files and deleted files. For any other changes it is the
-    // user's responsibility to explicitly refresh the affected project.
+    // In order to scope how much work we do when Spark re-gains focus, we only
+    // refresh the active files and projects. This lets us capture changed and
+    // deleted files without refreshing the entire workspace.
     Set<ws.Resource> resources = new Set.from(
-        editorManager.files.map((r) => r.parent != null ? r.parent : r));
+        editorManager.files.map((r) => r.project != null ? r.project : r));
     resources.forEach((ws.Resource r) => r.refresh());
   }
 }

@@ -36,6 +36,8 @@ class SparkFlags {
 
   static bool get showGitSupport => _flags['show-git-support'] == true;
 
+  static bool get startAnalysisEarly => true;
+
   static void setFlags(Map<String, dynamic> newFlags) {
     if (newFlags != null) _flags.addAll(newFlags);
   }
@@ -87,8 +89,9 @@ class SparkFlags {
       _flags['show-git-support'] = false;
     });
 
-    Future f2 = getAppContents('lib/dart/spark_analysis.dart').then((_) {
-      _flags['analyze-dart'] = true;
+    Future f2 = getAppContents('lib/dart/spark_analysis.dart').then((data) {
+      // Only true if the `spark_analysis.dart` has lots of content.
+      _flags['analyze-dart'] = data.length > 1000;
     }).catchError((e) {
       _flags['analyze-dart'] = false;
     });
