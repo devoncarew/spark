@@ -12,10 +12,10 @@ import 'dart:convert' show JSON;
  */
 class SparkFlags {
   static final _flags = new Map<String, dynamic>();
+  static final StreamController<String> _controller =
+      new StreamController.broadcast();
 
-  /**
-   * Accessors to the currently supported flags.
-   */
+  // Accessors to the currently supported flags.
   // NOTE: '...== true' below are on purpose: missing flags default to false.
   static bool get developerMode => _flags['test-mode'] == true;
   static bool get useLightAceThemes => _flags['light-ace-themes'] == true;
@@ -25,6 +25,7 @@ class SparkFlags {
   static bool get showGitPull => _flags['show-git-pull'] == true;
   static bool get showGitBranch => _flags['show-git-branch'] == true;
   static bool get performJavaScriptAnalysis => _flags['analyze-javascript'] == true;
+
   // Bower:
   static bool get bowerMapComplexVerToLatestStable =>
       _flags['bower-map-complex-ver-to-latest-stable'] == true;
@@ -33,14 +34,25 @@ class SparkFlags {
   static List<String> get bowerIgnoredDeps =>
       _flags['bower-ignore-dependencies'];
 
+  // Demo flags:
+  static bool get demoMode => _isSet('demo-mode');
+  static set demoMode(bool value) => _setFlag('demo-mode', value);
+
+  static bool get showAnalyzerUI => !demoMode || _isSet('show-analyzer-ui');
+  static set showAnalyzerUI(bool value) => _setFlag('show-analyzer-ui', value);
+
+  static bool get showGitUI => !demoMode || _isSet('show-git-ui');
+  static set showGitUI(bool value) => _setFlag('show-git-ui', value);
+
   /**
-   * Add new flags to the set, possibly overwriting the existing values.
-   * Maps are treated specially, updating the top-level map entries rather
-   * than overwriting the whole map.
+   * Add new flags to the set, possibly overwriting the existing values. Maps
+   * are treated specially, updating the top-level map entries rather than
+   * overwriting the whole map.
    */
   static void setFlags(Map<String, dynamic> newFlags) {
     // TODO(ussuri): Also recursively update maps on 2nd level and below.
     if (newFlags == null) return;
+
     newFlags.forEach((key, newValue) {
       var value;
       var oldValue = _flags[key];
@@ -50,7 +62,7 @@ class SparkFlags {
       } else {
         value = newValue;
       }
-      _flags[key] = value;
+      _setFlag(key, value);
     });
   }
 
@@ -80,6 +92,13 @@ class SparkFlags {
   }
 
   /**
+   * Listen for changes to Spark flags. The event is the name of the changed
+   * flag; if the consumer is interested they can query [SparkFlags] for the
+   * value of the specific flag.
+   */
+  static Stream<String> get onFlagChange => _controller.stream;
+
+  /**
    * Read flags from a JSON file. If the file does not exit or can't be parsed,
    * return null.
    */
@@ -94,4 +113,11 @@ class SparkFlags {
       }
     });
   }
+
+  static void _setFlag(String flag, dynamic value) {
+    _flags[flag] = value;
+    _controller.add(flag);
+  }
+
+  static bool _isSet(String flag) => _flags[flag] == true;
 }

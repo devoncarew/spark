@@ -70,7 +70,7 @@ void main() {
       spark.start();
     });
   }).catchError((error) {
-    _logger.logError(error);
+    _logger.logError('${error}');
   });
 }
 

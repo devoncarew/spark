@@ -437,6 +437,7 @@ abstract class Spark
     actionManager.registerAction(new GitRevertChangesAction(this));
     actionManager.registerAction(new GitPushAction(this, getDialogElement("#gitPushDialog")));
     actionManager.registerAction(new RunTestsAction(this));
+    actionManager.registerAction(new ToggleDemoMode(this));
     actionManager.registerAction(new SettingsAction(this, getDialogElement('#settingsDialog')));
     actionManager.registerAction(new AboutSparkAction(this, getDialogElement('#aboutDialog')));
     actionManager.registerAction(new FileRenameAction(this, getDialogElement('#renameDialog')));
@@ -3198,6 +3199,18 @@ class RunTestsAction extends SparkAction {
       testDriver = new TestDriver(all_tests.defineTests, spark.jobManager,
           connectToTestListener: true);
     }
+  }
+}
+
+class ToggleDemoMode extends SparkAction {
+  ToggleDemoMode(Spark spark) : super(spark, "demo-mode", "Enable Demo Mode") {
+    addBinding('ctrl-alt-t', macBinding: 'macctrl-alt-d');
+  }
+
+  _invoke([Object context]) {
+    SparkFlags.demoMode = !SparkFlags.demoMode;
+
+    spark.showSuccessMessage('Demo mode ${SparkFlags.demoMode ? "on" : "off"}');
   }
 }
 
