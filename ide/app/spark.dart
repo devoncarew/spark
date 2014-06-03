@@ -3221,6 +3221,11 @@ class ToggleDemoMode extends SparkAction {
 
     spark.showSuccessMessage('Demo mode ${SparkFlags.demoMode ? "on" : "off"}');
   }
+
+  void _reconcileDemoSettings() {
+    // TODO: reconcile demo settings
+
+  }
 }
 
 class WebStorePublishAction extends SparkActionWithDialog {
