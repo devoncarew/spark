@@ -48,6 +48,7 @@ spark-dialog {
   font: inherit;
   margin: 2px;
   padding: 10px 10px 10px 44px;
+  visibility: hidden;
 }
 
 #fileFilter:focus {
@@ -203,4 +204,14 @@ spark-dialog {
 
 [selectableTxt] {
   -webkit-user-select: text;
+}
+
+/* Demo styles. */
+
+#gitCloneButton {
+  display: none;
+}
+
+#mobileDeployButton {
+  display: none;
 }

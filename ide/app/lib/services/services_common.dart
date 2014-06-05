@@ -226,6 +226,8 @@ abstract class UuidResolver {
  * Defines an object containing information about a declaration.
  */
 abstract class Declaration {
+  static final EMPTY_DECLARATION = new _EmptyDeclaration();
+
   final String name;
 
   Declaration(this.name);
@@ -309,6 +311,18 @@ class DocDeclaration extends Declaration {
   }
 
   Map toMap() => super.toMap()..addAll({"url": url});
+}
+
+class FileDeclaration extends Declaration {
+  File file;
+
+  FileDeclaration(File file) : super(file.path) {
+    this.file = file;
+  }
+}
+
+class _EmptyDeclaration extends Declaration {
+  _EmptyDeclaration() : super('');
 }
 
 /**

@@ -241,6 +241,10 @@ class SparkPolymer extends Spark {
     _bindButtonToAction('runButton', 'application-run');
     _bindButtonToAction('leftNav', 'navigate-back');
     _bindButtonToAction('rightNav', 'navigate-forward');
+
+    // TODO(devoncarew): Remove these.
+    _bindButtonToAction('gitCloneButton', 'git-clone');
+    _bindButtonToAction('mobileDeployButton', 'application-push');
   }
 
   @override
@@ -268,6 +272,12 @@ class SparkPolymer extends Spark {
 
   void _bindButtonToAction(String buttonId, String actionId) {
     SparkButton button = getUIElement('#${buttonId}');
+
+    if (button == null) {
+      print('Unable to locate button for id: ${buttonId}');
+      return;
+    }
+
     Action action = actionManager.getAction(actionId);
     action.onChange.listen((_) {
       // TODO(ussuri): This and similar line below should be

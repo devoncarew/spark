@@ -16,6 +16,7 @@ import 'package:spark_widgets/spark_dialog/spark_dialog.dart';
 import 'package:spark_widgets/spark_dialog_button/spark_dialog_button.dart';
 import 'package:spark_widgets/spark_progress/spark_progress.dart';
 import 'package:spark_widgets/spark_status/spark_status.dart';
+import 'package:spark_widgets/spark_split_view/spark_split_view.dart';
 
 import 'lib/ace.dart';
 import 'lib/actions.dart';
@@ -23,10 +24,12 @@ import 'lib/analytics.dart' as analytics;
 import 'lib/apps/app_utils.dart';
 import 'lib/builder.dart';
 import 'lib/dart/dart_builder.dart';
+import 'lib/demo.dart';
 import 'lib/editors.dart';
 import 'lib/editor_area.dart';
 import 'lib/event_bus.dart';
 import 'lib/exception.dart';
+import 'lib/html/html_builder.dart';
 import 'lib/javascript/js_builder.dart';
 import 'lib/json/json_builder.dart';
 import 'lib/jobs.dart';
@@ -156,6 +159,7 @@ abstract class Spark
       addBuilder(new JavaScriptBuilder());
     }
     addBuilder(new JsonBuilder());
+    addBuilder(new HtmlBuilder());
 
     return restoreWorkspace().then((_) {
       return restoreLocationManager().then((_) {
@@ -1828,6 +1832,7 @@ class GotoDeclarationAction extends SparkAction {
 
   void gotoDeclaration() {
     Editor editor = spark.getCurrentEditor();
+
     if (editor is TextEditor) {
       editor.navigateToDeclaration(new Duration(milliseconds: 500)).then(
           (Declaration declaration) {
@@ -3014,28 +3019,34 @@ abstract class PackageManagementJob extends Job {
 
 class PubGetJob extends PackageManagementJob {
   PubGetJob(Spark spark, ws.Folder container) :
-      super(spark, container, 'pub get');
+      super(spark, container, 'Pub get');
 
-  Future _run() => _spark.pubManager.installPackages(_container);
+  Future _run() {
+    if (DemoManager.isDemoMode && DemoManager.isDemoProject(_container.project)) {
+      return new Future.delayed(new Duration(milliseconds: 2500));
+    } else {
+      return _spark.pubManager.installPackages(_container);
+    }
+  }
 }
 
 class PubUpgradeJob extends PackageManagementJob {
   PubUpgradeJob(Spark spark, ws.Folder container) :
-      super(spark, container, 'pub upgrade');
+      super(spark, container, 'Pub upgrade');
 
   Future _run() => _spark.pubManager.upgradePackages(_container);
 }
 
 class BowerGetJob extends PackageManagementJob {
   BowerGetJob(Spark spark, ws.Folder container) :
-      super(spark, container, 'bower install');
+      super(spark, container, 'Bower install');
 
   Future _run() => _spark.bowerManager.installPackages(_container);
 }
 
 class BowerUpgradeJob extends PackageManagementJob {
   BowerUpgradeJob(Spark spark, ws.Folder container) :
-      super(spark, container, 'bower upgrade');
+      super(spark, container, 'Bower upgrade');
 
   Future _run() => _spark.bowerManager.upgradePackages(_container);
 }
@@ -3211,20 +3222,89 @@ class RunTestsAction extends SparkAction {
   }
 }
 
-class ToggleDemoMode extends SparkAction {
+class ToggleDemoMode extends SparkAction implements DemoState {
   ToggleDemoMode(Spark spark) : super(spark, "demo-mode", "Enable Demo Mode") {
-    addBinding('ctrl-alt-t', macBinding: 'macctrl-alt-d');
+    addBinding('ctrl-alt-d', macBinding: 'macctrl-alt-d');
   }
 
   _invoke([Object context]) {
-    SparkFlags.demoMode = !SparkFlags.demoMode;
+    if (DemoManager.isDemoMode) {
+      DemoManager.dispose();
 
-    spark.showSuccessMessage('Demo mode ${SparkFlags.demoMode ? "on" : "off"}');
+      hasFilesView = true;
+      hasGitCloneButton = false;
+      hasAnalyzer = true;
+      hasMobileDeployButton = false;
+
+      spark.showSuccessMessage('Demo mode off');
+    } else {
+      DemoManager.init(spark.workspace, this);
+
+      hasFilesView = true;
+      hasGitCloneButton = false;
+      hasAnalyzer = true;
+      hasMobileDeployButton = false;
+
+      DemoManager.demoManager.reconcile();
+
+      spark.showSuccessMessage('Demo mode on');
+    }
   }
 
-  void _reconcileDemoSettings() {
-    // TODO: reconcile demo settings
+  // DemoState implemetation:
 
+  bool _hasFilesView;
+  bool get hasFilesView => _hasFilesView;
+  set hasFilesView(bool value) {
+    if (value != hasFilesView) {
+      Element element = querySelector('#fileViewArea');
+      element.style.display = value ? 'block' : 'none';
+
+      SparkSplitView splitter = spark.getUIElement('#splitView');
+
+//      print(splitter.children);
+//      print(splitter.shadowRoot);
+//      print(splitter.shadowRoot.children);
+
+      if (value) {
+        //splitter.minTargetSize = 100;
+        splitter.targetSize = 250;
+      } else {
+        //splitter.minTargetSize = 0;
+        splitter.targetSize = 0;
+      }
+    }
+  }
+
+  bool _hasGitCloneButton;
+  bool get hasGitCloneButton => _hasGitCloneButton;
+  set hasGitCloneButton(bool value) {
+    if (value != hasGitCloneButton) {
+      Element element = spark.getUIElement('#gitCloneButton');
+      element.style.display = value ? 'block' : 'none';
+    }
+  }
+
+  bool _hasAnalyzer;
+  bool get hasAnalyzer => _hasAnalyzer;
+  set hasAnalyzer(bool value) {
+    if (value != hasAnalyzer) {
+      new Timer(new Duration(seconds: 2), () {
+        //spark._aceManager.outline.toggle();
+        Element element = querySelector('#outline');
+        element.style.opacity = value ? '0.8' : '0';
+        //element.style.display = value ? 'block' : 'none';
+      });
+    }
+  }
+
+  bool _hasMobileDeployButton;
+  bool get hasMobileDeployButton => _hasMobileDeployButton;
+  set hasMobileDeployButton(bool value) {
+    if (value != hasMobileDeployButton) {
+      Element element = spark.getUIElement('#mobileDeployButton');
+      element.style.display = value ? 'block' : 'none';
+    }
   }
 }
 

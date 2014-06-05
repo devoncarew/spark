@@ -4,24 +4,19 @@
 
 library spark.ui.polymer.files_view;
 
-//import 'dart:html';
-
 import 'package:polymer/polymer.dart';
-import 'package:spark_widgets/common/spark_widget.dart';
-
-//import '../../../../spark_flags.dart';
+import 'package:spark_widgets/spark_tree_view/spark_tree_view_model.dart';
+import 'package:spark_widgets/spark_tree_view/src/spark_tree_view_node.dart';
 
 @CustomTag('files-view')
-class FilesView extends SparkWidget {
+class FilesView extends SparkTreeViewNode {
+  @published SparkTreeViewModel model;
 
-  //factory FilesView() => new Element.tag('files-view');
-
+  /// Constructor.
   FilesView.created() : super.created();
 
   @override
   void enteredView() {
-    //SparkFlags.showFilesView = true;
-
-    print('files-view created');
+    super.enteredView();
   }
 }

@@ -17,6 +17,7 @@ import 'package_manager.dart';
 import 'pub_properties.dart';
 import '../jobs.dart';
 import '../workspace.dart';
+import '../demo.dart';
 
 Logger _logger = new Logger('spark.pub');
 
@@ -157,6 +158,11 @@ class _PubBuilder extends PackageBuilder {
     // If we're building a top-level file, return.
     if (project == null) return new Future.value();
 
+    if (DemoManager.isDemoMode && DemoManager.isDemoProject(project)) {
+      DemoManager.demoManager.reconcile();
+      return new Future.value();
+    }
+
     File pubspecFile = project.getChild(properties.packageSpecFileName);
 
     if (pubspecFile is! File) {
@@ -198,7 +204,7 @@ class _PubBuilder extends PackageBuilder {
 
     return file.getContents().then((String str) {
       try {
-        _PubSpecInfo info = new _PubSpecInfo.parse(str);
+        PubSpecInfo info = new PubSpecInfo.parse(str);
         properties.setSelfReference(file.project, info.name);
         for (String dep in info.getDependencies()) {
           Resource dependency =
@@ -223,13 +229,13 @@ class _PubBuilder extends PackageBuilder {
   String get _packageServiceName => properties.packageServiceName;
 }
 
-class _PubSpecInfo {
+class PubSpecInfo {
   Map _map;
 
   /**
    * This method can throw exceptions on parse errors.
    */
-  _PubSpecInfo.parse(String str) {
+  PubSpecInfo.parse(String str) {
     _map = yaml.loadYaml(str);
   }
 

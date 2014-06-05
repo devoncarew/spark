@@ -34,16 +34,6 @@ class SparkFlags {
   static List<String> get bowerIgnoredDeps =>
       _flags['bower-ignore-dependencies'];
 
-  // Demo flags:
-  static bool get demoMode => _isSet('demo-mode');
-  static set demoMode(bool value) => _setFlag('demo-mode', value);
-
-  static bool get showAnalyzerUI => !demoMode || _isSet('show-analyzer-ui');
-  static set showAnalyzerUI(bool value) => _setFlag('show-analyzer-ui', value);
-
-  static bool get showGitUI => !demoMode || _isSet('show-git-ui');
-  static set showGitUI(bool value) => _setFlag('show-git-ui', value);
-
   /**
    * Add new flags to the set, possibly overwriting the existing values. Maps
    * are treated specially, updating the top-level map entries rather than

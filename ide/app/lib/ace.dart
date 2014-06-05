@@ -64,6 +64,9 @@ class TextEditor extends Editor {
     if (MarkdownEditor.isMarkdownFile(file)) {
       return new MarkdownEditor._create(aceManager, file, prefs);
     }
+    if (HtmlEditor.isHtmlFile(file)) {
+      return new HtmlEditor._create(aceManager, file, prefs);
+    }
     return new TextEditor._create(aceManager, file, prefs);
   }
 
@@ -136,7 +139,8 @@ class TextEditor extends Editor {
 
   void format() { }
 
-  Future navigateToDeclaration([Duration timeLimit]) => new Future.value();
+  Future<svc.Declaration> navigateToDeclaration([Duration timeLimit]) =>
+      new Future.value(svc.Declaration.EMPTY_DECLARATION);
 
   void fileContentsChanged() {
     if (_session != null) {
@@ -269,6 +273,7 @@ class DartEditor extends TextEditor {
           html.window.open(declaration.url, "spark_doc");
         }
       }
+
       return declaration;
     });
   }
@@ -316,8 +321,75 @@ class MarkdownEditor extends TextEditor {
   }
 
   @override
-  void reconcile() {
-    _markdown.renderHtml();
+  void reconcile() => _markdown.renderHtml();
+}
+
+class HtmlEditor extends TextEditor {
+  static bool isHtmlFile(workspace.File file) =>
+      file.name.endsWith('.htm') || file.name.endsWith('.html');
+
+  HtmlEditor._create(AceManager aceManager, workspace.File file,
+    SparkPreferences prefs) : super._create(aceManager, file, prefs);
+
+  /**
+   * Handle navigating to file references in strings. So, things like the href
+   * in:
+   *
+   *     <link rel="import" href="spark_polymer_ui.html">
+   */
+  Future<svc.Declaration> navigateToDeclaration([Duration timeLimit]) {
+    if (file.parent == null) {
+      return new Future.value(svc.Declaration.EMPTY_DECLARATION);
+    }
+
+    int offset = _session.document.positionToIndex(
+        aceManager._aceEditor.cursorPosition);
+    String text = _session.value;
+
+    String path = _getQuotedString(text, offset);
+
+    if (path == null) return new Future.value(svc.Declaration.EMPTY_DECLARATION);
+
+    workspace.File targetFile = _resolvePath(file, path);
+
+    if (targetFile != null) {
+      aceManager.delegate.openEditor(targetFile);
+      return new Future.value(new svc.FileDeclaration(targetFile));
+    } else {
+      return new Future.value();
+    }
+  }
+
+  String _getQuotedString(String text, int offset) {
+    int leftSide = offset;
+
+    while (leftSide > 0) {
+      String c = text[leftSide];
+      if (c == "'" || c == '"') break;
+      if (c == '\n') return null;
+      leftSide--;
+      if (leftSide < 0) return null;
+    }
+
+    leftSide++;
+    int rightSide = offset;
+
+    while ((rightSide + 1) < text.length) {
+      String c = text[rightSide];
+      if (c == "'" || c == '"') {
+        rightSide--;
+        break;
+      }
+      if (c == '\n') break;
+      rightSide++;
+    }
+
+    return text.substring(leftSide, rightSide + 1);
+  }
+
+  workspace.File _resolvePath(workspace.File file, String path) {
+    // TODO: handle `..`
+    return file.parent.getChildPath(path);
   }
 }
 
