@@ -58,7 +58,7 @@ abstract class GitObject {
 class TreeEntry {
 
   String name;
-  Uint8List shaBytes;
+  List<int> shaBytes;
   bool isBlob;
 
   String get sha => shaBytesToString(shaBytes);
@@ -99,7 +99,7 @@ class TreeObject extends GitObject {
   }
 
   sortEntries() {
-    //TODO implement.
+    // TODO(grv): Implement.
   }
 
   // Parses the byte stream and constructs the tree object.
@@ -111,7 +111,7 @@ class TreeObject extends GitObject {
       int entryStart = idx;
       while (buffer[idx] != 0) {
         if (idx >= buffer.length) {
-          //TODO(grv) : better exception handling.
+          //TODO(grv): Better exception handling.
           throw new ParseError("Unable to parse git tree object");
         }
         idx++;
@@ -182,7 +182,7 @@ class CommitObject extends GitObject {
     } else if (data is String) {
       this.data = data;
     } else {
-      // TODO: Clarify this exception.
+      // TODO(grv): Clarify this exception.
       throw "Data is in incompatible format.";
     }
     _parseData();
@@ -268,26 +268,25 @@ class TagObject extends GitObject {
 class LooseObject extends GitObject {
   int size;
 
-  LooseObject(buf) {
+  LooseObject(dynamic buf) {
     _parse(buf);
   }
 
   // Parses and constructs a loose git object.
-  void _parse(buf) {
+  void _parse(dynamic buf) {
     String header;
     int i;
-    if (buf is chrome.ArrayBuffer) {
-      Uint8List data = new Uint8List.fromList(buf.getBytes());
+    if (buf is List<int>) {
       List<String> headChars = [];
-      for (i = 0; i < data.length; ++i) {
-        if (data[i] != 0)
-          headChars.add(UTF8.decode([data[i]]));
+      for (i = 0; i < buf.length; ++i) {
+        if (buf[i] != 0)
+          headChars.add(UTF8.decode([buf[i]]));
         else
           break;
       }
       header = headChars.join();
 
-      this.data = data.sublist(i + 1, data.length);
+      this.data = buf.sublist(i + 1, buf.length);
     } else {
       i = buf.indexOf(new String.fromCharCode(0));
       header = buf.substring(0, i);
