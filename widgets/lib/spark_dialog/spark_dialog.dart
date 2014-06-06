@@ -33,6 +33,8 @@ class SparkDialog extends SparkWidget {
     SparkWidget.enableKeyboardEvents(_modal);
   }
 
+  bool get isShowing => _modal.opened;
+
   void show() {
     if (!_modal.opened) {
       _modal.toggle();

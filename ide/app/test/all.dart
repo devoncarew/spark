@@ -7,6 +7,8 @@
  */
 library spark.all_tests;
 
+import '../spark.dart';
+
 import 'ace_test.dart' as ace_test;
 import 'actions_test.dart' as actions_test;
 import 'analytics_test.dart' as analytics_test;
@@ -14,6 +16,7 @@ import 'app_test.dart' as app_test;
 import 'benchmarks.dart' as benchmarks;
 import 'builder_test.dart' as builder_test;
 import 'cssbeautify_test.dart' as cssbeautify_test;
+import 'dialogs_test.dart' as dialogs_test;
 import 'editors_test.dart' as editors_test;
 import 'event_bus_test.dart' as event_bus_test;
 import 'files_test.dart' as files_test;
@@ -37,7 +40,7 @@ import 'workspace_test.dart' as workspace_test;
 /**
  * Place all new tests here.
  */
-void defineTests() {
+void defineTests(Spark spark) {
   ace_test.defineTests();
   actions_test.defineTests();
   analytics_test.defineTests();
@@ -63,6 +66,9 @@ void defineTests() {
   tcp_test.defineTests();
   utils_test.defineTests();
   workspace_test.defineTests();
+
+  // UI tests.
+  dialogs_test.defineTests(spark);
 
   // Run our benchmarks as well.
   benchmarks.defineTests();
