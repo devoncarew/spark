@@ -21,10 +21,11 @@ import '../demo.dart';
 
 Logger _logger = new Logger('spark.pub');
 
-File findPubspec(Folder container) {
-  while (container.parent != null) {
-    if (container.getChild(pubProperties.packageSpecFileName) != null) {
-      return container.getChild(pubProperties.packageSpecFileName);
+File findPubspec(Container container) {
+  while (container.parent != null && container is! Workspace) {
+    Resource child = container.getChild(pubProperties.packageSpecFileName);
+    if (child != null) {
+      return child;
     }
     container = container.parent;
   }
@@ -50,13 +51,13 @@ class PubManager extends PackageManager {
   Future upgradePackages(Folder container) =>
       _installUpgradePackages(container, 'upgrade', true);
 
-  Future isPackagesInstalled(Folder container) {
+  Future<dynamic> arePackagesInstalled(Folder container) {
     File pubspecFile = findPubspec(container);
     if (pubspecFile is File) {
       container = pubspecFile.parent;
       return pubspecFile.getContents().then((String str) {
         try {
-          _PubSpecInfo info = new _PubSpecInfo.parse(str);
+          PubSpecInfo info = new PubSpecInfo.parse(str);
           for (String dep in info.getDependencies()) {
             Resource dependency =
                  container.getChildPath('${properties.packagesDirName}/${dep}');
@@ -75,8 +76,6 @@ class PubManager extends PackageManager {
   //
   // - end PackageManager abstract interface.
   //
-
-
 
   Future _installUpgradePackages(
       Folder container, String commandName, bool isUpgrade) {

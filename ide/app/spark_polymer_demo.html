@@ -17,9 +17,9 @@
 <link rel="import" href="packages/spark_widgets/spark_status/spark_status.html">
 <link rel="import" href="packages/spark_widgets/spark_toolbar/spark_toolbar.html">
 
-<link rel="import" href="lib/ui/polymer/files_view/files_view.html">
-<link rel="import" href="lib/ui/polymer/git_clone_button/git_clone_button.html">
-<link rel="import" href="lib/ui/polymer/mobile_deploy_button/mobile_deploy_button.html">
+<link rel="import" href="lib/ui/files_view/files_view.html">
+<link rel="import" href="lib/ui/git_clone_button/git_clone_button.html">
+<link rel="import" href="lib/ui/mobile_deploy_button/mobile_deploy_button.html">
 
 <polymer-element name="spark-polymer-ui" attributes="splitViewPosition">
   <template>
@@ -43,6 +43,7 @@
         <spark-toolbar>
           <left-nav-button></left-nav-button>
           <right-nav-button></right-nav-button>
+          <restart-spark-button></restart-spark-button>
         </spark-toolbar>
       </div>
     </split-view>

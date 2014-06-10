@@ -74,7 +74,7 @@ spark-dialog {
 #navigationButtons {
   position: absolute;
   right: 0;
-  width: 95px;
+  width: 135px;
   z-index: 150;
 }
 
@@ -215,3 +215,9 @@ spark-dialog {
 #mobileDeployButton {
   display: none;
 }
+
+/* TODO:
+#restartSparkButton {
+  display: none;
+}
+*/

@@ -30,7 +30,7 @@ import 'utils.dart' as utils;
 import 'workspace.dart' as workspace;
 import 'services.dart' as svc;
 import 'outline.dart';
-import 'ui/polymer/goto_line_view/goto_line_view.dart';
+import 'ui/goto_line_view/goto_line_view.dart';
 import 'utils.dart';
 
 export 'package:ace/ace.dart' show EditSession;
@@ -99,7 +99,7 @@ class TextEditor extends Editor {
   html.Element get element => aceManager.parentElement;
 
   void activate() {
-    aceManager.outline.visible = supportsOutline;
+    _outline.visible = supportsOutline;
     aceManager._aceEditor.readOnly = readOnly;
   }
 
@@ -108,7 +108,9 @@ class TextEditor extends Editor {
    */
   void reconcile() { }
 
-  void deactivate() { }
+  void deactivate() {
+    if (supportsOutline && _outline.visible) _outline.visible = false;
+  }
 
   void resize() => aceManager.resize();
 
@@ -179,6 +181,9 @@ class TextEditor extends Editor {
     }
   }
 
+  int getCursorOffset() => _session.document.positionToIndex(
+      aceManager._aceEditor.cursorPosition);
+
   /**
    * Replace the editor's contents with the given text. Make sure that we don't
    * fire a change event.
@@ -208,6 +213,8 @@ class TextEditor extends Editor {
   void _invokeReconcile() {
     reconcile();
   }
+
+  Outline get _outline => aceManager.outline;
 }
 
 class DartEditor extends TextEditor {
@@ -245,18 +252,16 @@ class DartEditor extends TextEditor {
     });
   }
 
-  Outline get _outline => aceManager.outline;
-
   Future<svc.Declaration> navigateToDeclaration([Duration timeLimit]) {
-    int offset = _session.document.positionToIndex(
-        aceManager._aceEditor.cursorPosition);
+    int offset = getCursorOffset();
 
     Future declarationFuture = aceManager._analysisService.getDeclarationFor(
         file, offset);
 
     if (timeLimit != null) {
-      declarationFuture = declarationFuture.timeout(timeLimit, onTimeout: () =>
-          throw new TimeoutException("navigateToDeclaration timed out"));
+      declarationFuture = declarationFuture.timeout(timeLimit, onTimeout: () {
+        throw new TimeoutException("navigateToDeclaration timed out");
+      });
     }
 
     return declarationFuture.then((svc.Declaration declaration) {
@@ -293,6 +298,29 @@ class CssEditor extends TextEditor {
     if (newValue != oldValue) {
       _replaceContents(newValue);
       dirty = true;
+    }
+  }
+
+  /**
+   * Handle navigating to file references in strings. So, things like:
+   *
+   *     @import url("packages/bootjack/css/bootstrap.min.css");
+   */
+  Future<svc.Declaration> navigateToDeclaration([Duration timeLimit]) {
+    if (file.parent == null) {
+      return new Future.value(svc.Declaration.EMPTY_DECLARATION);
+    }
+
+    String path = _getQuotedString(_session.value, getCursorOffset());
+    if (path == null) return new Future.value(svc.Declaration.EMPTY_DECLARATION);
+
+    workspace.File targetFile = _resolvePath(file, path);
+
+    if (targetFile != null) {
+      aceManager.delegate.openEditor(targetFile);
+      return new Future.value(new svc.FileDeclaration(targetFile));
+    } else {
+      return new Future.value();
     }
   }
 }
@@ -342,12 +370,7 @@ class HtmlEditor extends TextEditor {
       return new Future.value(svc.Declaration.EMPTY_DECLARATION);
     }
 
-    int offset = _session.document.positionToIndex(
-        aceManager._aceEditor.cursorPosition);
-    String text = _session.value;
-
-    String path = _getQuotedString(text, offset);
-
+    String path = _getQuotedString(_session.value, getCursorOffset());
     if (path == null) return new Future.value(svc.Declaration.EMPTY_DECLARATION);
 
     workspace.File targetFile = _resolvePath(file, path);
@@ -358,38 +381,6 @@ class HtmlEditor extends TextEditor {
     } else {
       return new Future.value();
     }
-  }
-
-  String _getQuotedString(String text, int offset) {
-    int leftSide = offset;
-
-    while (leftSide > 0) {
-      String c = text[leftSide];
-      if (c == "'" || c == '"') break;
-      if (c == '\n') return null;
-      leftSide--;
-      if (leftSide < 0) return null;
-    }
-
-    leftSide++;
-    int rightSide = offset;
-
-    while ((rightSide + 1) < text.length) {
-      String c = text[rightSide];
-      if (c == "'" || c == '"') {
-        rightSide--;
-        break;
-      }
-      if (c == '\n') break;
-      rightSide++;
-    }
-
-    return text.substring(leftSide, rightSide + 1);
-  }
-
-  workspace.File _resolvePath(workspace.File file, String path) {
-    // TODO: handle `..`
-    return file.parent.getChildPath(path);
   }
 }
 
@@ -491,6 +482,7 @@ class AceManager {
 
   void setupOutline(html.Element parentElement) {
     outline = new Outline(_analysisService, parentElement, _prefs.prefStore);
+    outline.visible = false;
     outline.onChildSelected.listen((OutlineItem item) {
       ace.Point startPoint =
           currentSession.document.indexToPosition(item.nameStartOffset);
@@ -997,4 +989,59 @@ String _calcMD5(String text) {
   crypto.MD5 md5 = new crypto.MD5();
   md5.add(text.codeUnits);
   return crypto.CryptoUtils.bytesToHex(md5.close());
+}
+
+/**
+ * Given some arbitrary text and an offset into it, attempt to return the
+ * parts of the offset surrounded by quotes.
+ */
+String _getQuotedString(String text, int offset) {
+  int leftSide = offset;
+
+  while (leftSide >= 0) {
+    String c = text[leftSide];
+    if (c == '\n' || leftSide == 0) return null;
+    if (c == "'" || c == '"') break;
+    leftSide--;
+  }
+
+  leftSide++;
+  int rightSide = offset;
+
+  while ((rightSide + 1) < text.length) {
+    String c = text[rightSide];
+    if (c == "'" || c == '"') {
+      rightSide--;
+      break;
+    }
+    if (c == '\n') break;
+    rightSide++;
+  }
+
+  return text.substring(leftSide, rightSide + 1);
+}
+
+/**
+ * Given a file and a relative path from it, resolve the target file. Can
+ * return `null`.
+ */
+workspace.File _resolvePath(workspace.File file, String path) {
+  return _resolvePaths(file.parent, path.split('/'));
+}
+
+workspace.File _resolvePaths(workspace.Container container,
+                             Iterable<String> pathElements) {
+  if (pathElements.isEmpty || container == null) return null;
+
+  String element = pathElements.first;
+
+  if (pathElements.length == 1) {
+    return container.getChild(element);
+  }
+
+  if (element == '..') {
+    return _resolvePaths(container.parent, pathElements.skip(1));
+  } else {
+    return _resolvePaths(container.getChild(element), pathElements.skip(1));
+  }
 }

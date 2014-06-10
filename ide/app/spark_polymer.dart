@@ -108,6 +108,14 @@ class SparkPolymerDialog implements Dialog {
   @override
   Element getShadowDomElement(String selectors) =>
       _dialogElement.shadowRoot.querySelector(selectors);
+
+  @override
+  bool get activityVisible => _dialogElement.activityVisible;
+
+  @override
+  void set activityVisible(bool visible) {
+    _dialogElement.activityVisible = visible;
+  }
 }
 
 class SparkPolymer extends Spark {
@@ -245,6 +253,7 @@ class SparkPolymer extends Spark {
     // TODO(devoncarew): Remove these.
     _bindButtonToAction('gitCloneButton', 'git-clone');
     _bindButtonToAction('mobileDeployButton', 'application-push');
+    _bindButtonToAction('restartSparkButton', 'restart-spark');
   }
 
   @override

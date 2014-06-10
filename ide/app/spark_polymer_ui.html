@@ -16,8 +16,8 @@
 <link rel="import" href="packages/spark_widgets/spark_split_view/spark_split_view.html">
 <link rel="import" href="packages/spark_widgets/spark_status/spark_status.html">
 <link rel="import" href="packages/spark_widgets/spark_toolbar/spark_toolbar.html">
-<link rel="import" href="lib/ui/polymer/commit_message_view/commit_message_view.html">
-<link rel="import" href="lib/ui/polymer/goto_line_view/goto_line_view.html">
+<link rel="import" href="lib/ui/commit_message_view/commit_message_view.html">
+<link rel="import" href="lib/ui/goto_line_view/goto_line_view.html">
 
 <polymer-element name="spark-polymer-ui" attributes="splitViewPosition">
   <template>
@@ -80,7 +80,7 @@
             </spark-menu-item>
             <spark-menu-item action-id="folder-open" label="Add Folder to Workspace...">
             </spark-menu-item>
-            <spark-menu-item action-id="git-clone" label="Git Clone...">
+            <spark-menu-item action-id="git-clone" label="Add Git Project...">
             </spark-menu-item>
 
             <spark-menu-separator></spark-menu-separator>
@@ -136,6 +136,10 @@
               <polygon points="12,4 10.6,5.4 16.2,11 4,11 4,13 16.2,13 10.6,18.6 12,20 20,12 "></polygon>
             </svg>
           </spark-button>
+          <spark-button id="restartSparkButton" flat round padding="medium">
+            <span class="glyphicon glyphicon-repeat" style="font-size: 20px">
+            </span>
+          </spark-button>
         </spark-toolbar>
 
         <div id="sparkStatusContainer">
@@ -143,7 +147,6 @@
         </div>
       </div>
     </spark-split-view>
-
 
     <!-- =========================== DIALOGS =============================== -->
 
@@ -302,9 +305,7 @@
             placeholder="https://github.com/dart-lang/spark.git"
             spellcheck="false" autosave focused>
       </div>
-      <spark-progress id="dialogProgress"
-          indeterminate showProgressMessage showCancel visible="false">
-      </spark-progress>
+      <div id="progressDescription"></div>
 
       <spark-dialog-button id="cloneClose" cancel>Cancel</spark-dialog-button>
       <spark-dialog-button id="clone" submit>Clone</spark-dialog-button>
@@ -342,27 +343,19 @@
           Enter a brief description of the changes.
         </span>
       </div>
-      <spark-progress id="dialogProgress"
-          indeterminate showProgressMessage showCancel visible="false">
-      </spark-progress>
-
       <spark-dialog-button id="gitCommitCancel" cancel>Cancel</spark-dialog-button>
       <spark-dialog-button id="gitCommit" submit>Commit</spark-dialog-button>
     </spark-dialog>
 
     <!-- Git Branch dialog -->
     <spark-dialog id="gitBranchDialog" title="Create Branch">
-      <label for="gitBranchName">New branch name</label>
+      <label for="gitBranchName">Create a new branch</label>
       <input id="gitBranchName" type="text" class="form-control"
           pattern="[^~:?*\^\[\s]+" spellcheck="false" autosave focused>
-      <span class="help-block">Create a new git branch.</span>
       <div class="form-group">
-        <label for="gitRemoteBranches">Choose a remote branch</label>
+        <label for="gitRemoteBranches">Checkout a remote branch</label>
         <select id="gitRemoteBranches" class="form-control"></select>
       </div>
-      <spark-progress id="dialogProgress"
-          indeterminate showProgressMessage showCancel visible="false">
-      </spark-progress>
       <spark-dialog-button id="gitBranchCancel" cancel>Cancel</spark-dialog-button>
       <spark-dialog-button id="gitBranch" submit>Create Branch</spark-dialog-button>
     </spark-dialog>
@@ -378,9 +371,6 @@
         <label for="gitCheckoutBranch">Switch to branch</label>
         <select id="gitCheckoutBranch" class="form-control"></select>
       </div>
-      <spark-progress id="dialogProgress"
-          indeterminate showProgressMessage showCancel visible="false">
-      </spark-progress>
       <spark-dialog-button id="gitCheckoutCancel" cancel>Cancel</spark-dialog-button>
       <spark-dialog-button id="gitCheckout" submit>Checkout</spark-dialog-button>
     </spark-dialog>
@@ -390,10 +380,6 @@
       <div class="form-group">
         <div id="gitCommitList"></div>
       </div>
-      <spark-progress id="dialogProgress"
-          indeterminate showProgressMessage showCancel visible="false">
-      </spark-progress>
-
       <spark-dialog-button id="gitPushClose">Cancel</spark-dialog-button>
       <spark-dialog-button id="gitPush" submit>Push</spark-dialog-button>
     </spark-dialog>
@@ -556,6 +542,11 @@
       <spark-dialog-button submit>Login</spark-dialog-button>
     </spark-dialog>
 
+    <!-- Spark Status dialog -->
+    <spark-dialog id="statusDialog" title="">
+      <div id="progressDescription"></div>
+    </spark-dialog>
+
     <!-- Publish on webstore -->
     <spark-dialog id="webStorePublishDialog" title="Publish to Chrome Web Store">
       <div class="form-group">
@@ -643,7 +634,8 @@
     <!-- File remove dialog -->
     <spark-dialog id="fileRemoveDialog" title="Remove File">
       <div class="help-block">
-        "DELETE" will permanently delete &quot;<span id="name"></span>&quot;
+        "DELETE" will permanently delete
+         &quot;<span id="fileRemoveFileName"></span>&quot;
         from disk.<br>
         "REMOVE REFERENCE" will remove the reference to it from
         Spark, but keep it on disk.
