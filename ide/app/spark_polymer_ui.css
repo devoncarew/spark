@@ -86,6 +86,7 @@ spark-dialog {
 }
 
 #navigationButtons {
+  border: none;
   position: absolute;
   right: 0;
   width: 135px;
