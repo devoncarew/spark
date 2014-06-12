@@ -17,7 +17,6 @@ import 'package_manager.dart';
 import 'pub_properties.dart';
 import '../jobs.dart';
 import '../workspace.dart';
-import '../demo.dart';
 
 Logger _logger = new Logger('spark.pub');
 
@@ -190,11 +189,6 @@ class _PubBuilder extends PackageBuilder {
 
     // If we're building a top-level file, return.
     if (project == null) return new Future.value();
-
-    if (DemoManager.isDemoMode && DemoManager.isDemoProject(project)) {
-      DemoManager.demoManager.reconcile();
-      return new Future.value();
-    }
 
     File pubspecFile = project.getChild(properties.packageSpecFileName);
 

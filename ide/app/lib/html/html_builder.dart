@@ -9,7 +9,6 @@ import 'dart:async';
 import 'package:logging/logging.dart';
 
 import '../builder.dart';
-import '../demo.dart';
 import '../jobs.dart';
 import '../workspace.dart';
 
@@ -23,10 +22,6 @@ class HtmlBuilder extends Builder {
   HtmlBuilder();
 
   Future build(ResourceChangeEvent event, ProgressMonitor monitor) {
-    if (!DemoManager.isDemoMode) {
-      return new Future.value();
-    }
-
     List<ChangeDelta> projectDeletes = event.changes.where(
         (c) => c.resource is Project && c.isDelete).toList();
 
@@ -52,11 +47,7 @@ class HtmlBuilder extends Builder {
       && (file.name.endsWith('.html') || file.name.endsWith('.htm'));
 
   Future _processFile(File file) {
-    if (file.name != 'spark_polymer_demo.html') {
-      return new Future.value();
-    }
-
-    DemoManager.demoManager.reconcile();
+    // TODO:
 
     return new Future.value();
   }

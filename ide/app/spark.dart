@@ -163,9 +163,6 @@ abstract class Spark
     addBuilder(new HtmlBuilder());
 
     return restoreWorkspace().then((_) {
-      ToggleDemoModeAction action = actionManager.getAction('demo-mode');
-      action.restoreFromSettings();
-
       return restoreLocationManager().then((_) {
         // Location manager might have overridden the Ace-related flags from
         // "<project location>/.spark.json".
@@ -1657,7 +1654,7 @@ class ApplicationRunAction extends SparkAction implements ContextAction {
   ApplicationRunAction(Spark spark) : super(
       spark, "application-run", "Run") {
     addBinding("ctrl-r");
-    enabled = false;
+    //enabled = false;
     spark.focusManager.onResourceChange.listen((r) => _updateEnablement(r));
   }
 
@@ -1689,7 +1686,7 @@ class ApplicationRunAction extends SparkAction implements ContextAction {
   }
 
   void _updateEnablement(ws.Resource resource) {
-    enabled = _appliesTo(resource);
+    //enabled = _appliesTo(resource);
   }
 }
 
@@ -2137,7 +2134,7 @@ class DeployToMobileAction extends SparkActionWithProgressDialog implements Cont
   DeployToMobileAction(Spark spark, Element dialog)
       : super(spark, "application-push", "Deploy to Mobile", dialog) {
     _pushUrlElement = _triggerOnReturn("#pushUrl");
-    enabled = false;
+    //enabled = false;
     spark.focusManager.onResourceChange.listen((r) => _updateEnablement(r));
 
     // When the IP address field is selected, check the `IP` checkbox.
@@ -2183,7 +2180,7 @@ class DeployToMobileAction extends SparkActionWithProgressDialog implements Cont
   }
 
   void _updateEnablement(ws.Resource resource) {
-    enabled = _appliesTo(resource);
+    //enabled = _appliesTo(resource);
   }
 
   void _toggleProgressVisible(bool visible) {
@@ -3455,14 +3452,6 @@ class ToggleDemoModeAction extends SparkAction implements DemoState {
     addBinding('ctrl-alt-d', macBinding: 'macctrl-alt-d');
   }
 
-  void restoreFromSettings() {
-    spark.prefs.prefStore.getValue('demoMode').then((val) {
-      if ('true' == val) {
-        _invoke();
-      }
-    });
-  }
-
   _invoke([Object context]) {
     if (DemoManager.isDemoMode) {
       DemoManager.dispose();
@@ -3485,9 +3474,6 @@ class ToggleDemoModeAction extends SparkAction implements DemoState {
 
       spark.showSuccessMessage('Demo mode on');
     }
-
-    spark.prefs.prefStore.setValue(
-        'demoMode', DemoManager.isDemoMode.toString());
   }
 
   // DemoState implemetation:
@@ -3551,7 +3537,37 @@ class RestartSparkAction extends SparkAction {
   RestartSparkAction(Spark spark) :
       super(spark, "restart-spark", "Restart Spark");
 
-  _invoke([Object context]) => chrome.runtime.reload();
+  _invoke([Object context]) {
+    if (!DemoManager.isDemoMode) return;
+
+//    <div id="splashScreen">
+//      <div id="splashScreenProgress"></div>
+//    </div>
+
+    DivElement splash = new DivElement();
+    splash.id = 'splashScreen';
+    Element inner = new DivElement();
+    inner.id = 'splashScreenProgress';
+    splash.children.add(inner);
+
+    chrome.AppWindow win = chrome.app.window.current();
+    win.hide();
+
+    document.body.children.add(splash);
+    DemoManager.demoManager.reconcile();
+
+    new Future.delayed(new Duration(milliseconds: 250)).then((_) {
+      win.show();
+
+      return new Future.delayed(new Duration(milliseconds: 3000));
+    }).then((_) {
+      splash.classes.add('closeSplash');
+
+      return new Future.delayed(new Duration(milliseconds: 300));
+    }).then((_) {
+      splash.parent.children.remove(splash);
+    });
+  }
 }
 
 class WebStorePublishAction extends SparkActionWithDialog {

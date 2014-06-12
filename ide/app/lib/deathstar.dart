@@ -5,7 +5,7 @@ import 'dart:math' show Random;
 class SectorDefense {
   final DeathStar deathStar;
 
-  SectorDefense() : deathStar = new DeathStar();
+  SectorDefense();
 
   bool destroyStation(XWing xwing) {
     xwing.fire(deathStar);
@@ -38,7 +38,7 @@ class XWing {
       deathStar.destroy();
     }
   }
-  
+
   bool isOnTarget(DeathStar deathStar) {
     return new Random().nextInt(10) >= 9;
   }

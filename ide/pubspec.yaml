@@ -18,7 +18,6 @@ dependencies:
   compiler_unsupported: 0.7.1
   crypto: any
   diff: '>=0.1.0 <0.2.0'
-  git: any
   intl: any
   json: any
   logging: any
