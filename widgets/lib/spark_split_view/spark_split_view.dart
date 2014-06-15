@@ -48,6 +48,10 @@ class SparkSplitView extends SparkWidget {
     // TODO(ussuri): This was critical for correct propagation of the client's
     // changes in [targetSize] to the enclosed splitter. Investigate.
     _splitter.targetSize = targetSize;
+
+    Element leftChild = children.first;
+    leftChild.style.width = '${targetSize}px';
+
     if (IS_DART2JS) {
       // TODO(ussuri): In the deployed code, even the above wasn't enough.
       _splitter.targetSizeChanged();
