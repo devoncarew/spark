@@ -48,7 +48,8 @@ class DemoManager {
       demoState.hasAnalyzer = hasAnalyzer;
     });
 
-    File htmlFile = demoProject.getChildPath('app/spark_polymer_demo.html');
+    File htmlFile = demoProject.getChildPath('app/spark_polymer_demo.htm');
+
     htmlFile.getContents().then((String contents) {
       // Check for the file view.
       demoState.hasFilesView = contents.contains('<files-view>');
