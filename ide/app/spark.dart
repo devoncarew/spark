@@ -3598,9 +3598,8 @@ class RestartSparkAction extends SparkAction {
     splash.children.add(inner);
 
     chrome.AppWindow win = chrome.app.window.current();
-    win.hide();
-
     document.body.children.add(splash);
+    win.hide();
     DemoManager.demoManager.reconcile();
 
     new Future.delayed(new Duration(milliseconds: 250)).then((_) {
