@@ -626,7 +626,7 @@ abstract class Spark
   }
 
   void _setErrorDialogText(String title, String message) {
-    _errorDialog.dialog.title = title;
+    _errorDialog.dialog.headerTitle = title;
 
     Element container = _errorDialog.getElement('#errorMessage');
     container.children.clear();
@@ -698,7 +698,7 @@ abstract class Spark
       });
     }
 
-    _okCancelDialog.dialog.title = title;
+    _okCancelDialog.dialog.headerTitle = title;
 
     Element container = _okCancelDialog.getElement('#okCancelMessage');
     container.children.clear();
@@ -1200,12 +1200,20 @@ abstract class SparkActionWithDialog extends SparkAction {
 
     final Element submitBtn = _dialog.getElement("[submit]");
     if (submitBtn != null) {
-      submitBtn.onClick.listen((_) => _commit());
+      submitBtn.onClick.listen((e) {
+        // Consume the event so that the overlayToggle doesn't close the dialog.
+        e..stopPropagation()..preventDefault();
+        _commit();
+      });
     }
 
     final Element cancelBtn = _dialog.getElement("[cancel]");
     if (cancelBtn != null) {
-      cancelBtn.onClick.listen((_) => _cancel());
+      cancelBtn.onClick.listen((e) {
+        // Consume the event so that the overlayToggle doesn't close the dialog.
+        e..stopPropagation()..preventDefault();
+        _cancel();}
+      );
     }
 
     final Element closingXBtn = _dialog.getShadowDomElement("#closingX");
@@ -1290,7 +1298,7 @@ abstract class SparkActionWithStatusDialog extends SparkActionWithProgressDialog
    * the given future [f] is completed.
    */
   void _waitForJob(String title, String progressMessage, Future f) {
-    _dialog.dialog.title = title;
+    _dialog.dialog.headerTitle = title;
     _setProgressMessage(progressMessage);
     _toggleProgressVisible(true);
     _show();
@@ -1521,8 +1529,20 @@ class FileRenameAction extends SparkActionWithDialog implements ContextAction {
 
   void _commit() {
     super._commit();
+    String newName = _nameElement.value;
 
-    if (_nameElement.value.isNotEmpty) {
+    if (newName.isNotEmpty) {
+      // Check if a file or folder already exist with the new name.
+      Iterable<ws.Resource> children = [];
+      if (resource.parent != null) {
+        children = resource.parent.getChildren();
+      }
+
+      if (children.any((ws.Resource r) => r.name == newName)) {
+        spark.showErrorMessage(
+            'Error During Rename', 'File or folder already exists.');
+        return;
+      }
       resource.rename(_nameElement.value).then((value) {
         spark._renameOpenEditor(resource);
       }).catchError((e) {
@@ -2209,7 +2229,7 @@ class DeployToMobileAction extends SparkActionWithProgressDialog implements Cont
 
     _monitor = new ProgressMonitorImpl(this);
 
-    String type = getElement('input[name="type"]:checked').id;
+    String type = getElement('input[name="mobileDeployType"]:checked').id;
     bool useAdb = type == 'adb';
     String url = _pushUrlElement.value;
 
@@ -2262,13 +2282,10 @@ class ProgressMonitorImpl extends ProgressMonitor {
 
 class PropertiesAction extends SparkActionWithDialog implements ContextAction {
   ws.Resource _selectedResource;
-  Element _titleElement;
   HtmlElement _propertiesElement;
 
   PropertiesAction(Spark spark, Element dialog)
       : super(spark, 'properties', 'Properties…', dialog) {
-    // TODO(ussuri): This is a hack. Polymerize.
-    _titleElement = dialog.shadowRoot.querySelector('#title');
     _propertiesElement = dialog.querySelector('#body');
   }
 
@@ -2276,7 +2293,7 @@ class PropertiesAction extends SparkActionWithDialog implements ContextAction {
     _selectedResource = context.first;
     final String type = _selectedResource is ws.Project ? 'Project' :
       _selectedResource is ws.Container ? 'Folder' : 'File';
-    _titleElement.text = '${type} Properties';
+    _dialog.dialog.headerTitle = '${type} Properties';
     _propertiesElement.innerHtml = '';
     _buildProperties().then((_) => _show());
   }
@@ -2714,7 +2731,6 @@ class GitCommitAction extends SparkActionWithProgressDialog implements ContextAc
   }
 
   void _commit() {
-
     SparkDialogButton commitButton = getElement('#gitCommit');
     commitButton.disabled = true;
     commitButton.deliverChanges();
@@ -3670,7 +3686,7 @@ class WebStorePublishAction extends SparkActionWithDialog {
   }
 
   void _updateEnablement(ws.Resource resource) {
-    enabled = getAppContainerFor(resource) != null;
+    enabled = resource != null && getAppContainerFor(resource) != null;
   }
 }
 
