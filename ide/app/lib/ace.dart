@@ -109,7 +109,9 @@ class TextEditor extends Editor {
   void reconcile() { }
 
   void deactivate() {
-    if (supportsOutline && _outline.visible) _outline.visible = false;
+    if (supportsOutline && _outline.visible) {
+      _outline.visible = false;
+    }
   }
 
   void resize() => aceManager.resize();
@@ -220,7 +222,7 @@ class TextEditor extends Editor {
 class DartEditor extends TextEditor {
   static bool isDartFile(workspace.File file) => file.name.endsWith('.dart');
 
-  int outlineScrollPosition = 0;
+  OffsetRange outlineScrollPosition = new OffsetRange();
 
   DartEditor._create(AceManager aceManager, workspace.File file,
       SparkPreferences prefs) : super._create(aceManager, file, prefs);
@@ -246,7 +248,7 @@ class DartEditor extends TextEditor {
   }
 
   void reconcile() {
-    int pos = _outline.scrollPosition;
+    OffsetRange pos = _outline.scrollPosition;
     _outline.build(file.name, _session.value).then((_) {
       _outline.scrollPosition = pos;
     });
@@ -415,6 +417,7 @@ class AceManager {
   StreamSubscription _markerSubscription;
   workspace.File currentFile;
   svc.AnalyzerService _analysisService;
+  int _linkingMarkerId;
 
   AceManager(this.parentElement,
              this.delegate,
@@ -436,6 +439,51 @@ class AceManager {
     _aceEditor.setOption('enableBasicAutocompletion', true);
     // TODO(devoncarew): Disabled to workaround #2442.
     //_aceEditor.setOption('enableSnippets', true);
+
+    ace.require('ace/ext/linking');
+    _aceEditor.setOptions({'enableMultiselect' : false,
+                           'enableLinking' : true});
+
+    html.DivElement contentElement =
+        _aceEditor.renderer.containerElement.querySelector(".ace_content");
+
+    _aceEditor.onLinkHover.listen((ace.LinkEvent event) {
+      if (!DartEditor.isDartFile(currentFile)) {
+        return;
+      }
+
+      ace.Token token = event.token;
+
+      if (_linkingMarkerId != null) {
+        currentSession.removeMarker(_linkingMarkerId);
+      }
+
+      if (token != null && token.type == "identifier") {
+        contentElement.style.cursor = "pointer";
+        int startColumn = event.token.start;
+        ace.Point startPosition =
+            new ace.Point(event.position.row, startColumn);
+        int endColumn = startColumn + event.token.value.length;
+        ace.Point endPosition = new ace.Point(event.position.row, endColumn);
+        ace.Range markerRange =
+            new ace.Range.fromPoints(startPosition, endPosition);
+        _linkingMarkerId = currentSession.addMarker(markerRange,
+            "ace_link_marker", type: ace.Marker.TEXT);
+      } else {
+        contentElement.style.cursor = null;
+      }
+    });
+
+    parentElement.onKeyUp.listen((event) {
+      if ((PlatformInfo.isMac && event.keyCode == html.KeyCode.META) ||
+          (!PlatformInfo.isMac && event.keyCode == html.KeyCode.CTRL)) {
+        if (_linkingMarkerId != null) {
+          currentSession.removeMarker(_linkingMarkerId);
+        }
+        contentElement.style.cursor = null;
+      }
+    });
+
 
     // Override Ace's `gotoline` command.
     var command = new ace.Command(
@@ -468,6 +516,7 @@ class AceManager {
     ace.Mode.extensionMap['lock'] = ace.Mode.YAML;
     ace.Mode.extensionMap['nmf'] = ace.Mode.JSON;
     ace.Mode.extensionMap['project'] = ace.Mode.XML;
+    ace.Mode.extensionMap['webapp'] = ace.Mode.JSON;
 
     _setupGotoLine();
 
@@ -775,13 +824,14 @@ class AceManager {
 
       setMarkers(file.getMarkers());
       session.onChangeScrollTop.listen((_) => Timer.run(() {
-        if (outline.visible) {
+        if (outline.showing) {
           int firstCursorOffset = currentSession.document.positionToIndex(
               new ace.Point(_aceEditor.firstVisibleRow, 0));
           int lastCursorOffset = currentSession.document.positionToIndex(
               new ace.Point(_aceEditor.lastVisibleRow, 0));
 
-          outline.scrollToOffsets(firstCursorOffset, lastCursorOffset);
+          outline.scrollOffsetRangeIntoView(
+              new OffsetRange(firstCursorOffset, lastCursorOffset));
         }
       }));
     }

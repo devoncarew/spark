@@ -46,18 +46,20 @@
               on-input="{{fileFilterInputHandler}}"
               tabindex="0"/>
 
-          <spark-button id="runButton" flat round padding="medium">
-            <svg viewBox="0 0 24 24">
+          <spark-button id="runButton" flat round tooltip="Run">
+            <svg width="24px" height="24px" viewBox="0 0 24 24">
               <path d="M8 5v14l11-7z"/>
             </svg>
           </spark-button>
 
-          <spark-button id="gitCloneButton" flat round padding="medium">
+          <spark-button id="gitCloneButton" flat round padding="medium"
+              tooltip="Git Clone...">
             <span class="glyphicon glyphicon-cloud-download" style="font-size: 20px">
             </span>
           </spark-button>
 
-          <spark-button id="mobileDeployButton" flat round padding="medium">
+          <spark-button id="mobileDeployButton" flat round padding="medium"
+              tooltip="Deploy to Mobile...">
             <span class="glyphicon glyphicon-phone" style="font-size: 20px">
             </span>
           </spark-button>
@@ -68,8 +70,8 @@
               arrow="none"
               on-activate="{{onMenuSelected}}">
 
-            <spark-button menuButton flat round padding="medium">
-              <svg viewBox="0 0 24 24">
+            <spark-button menuButton flat round>
+              <svg width="24px" height="24px" viewBox="0 0 24 24">
                 <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
               </svg>
             </spark-button>
@@ -120,8 +122,8 @@
             horizontal
             justify="right"
             spacing="small">
-          <spark-button id="settingsButton" flat round padding="medium">
-            <svg viewBox="0 0 24 24">
+          <spark-button id="settingsButton" flat round>
+            <svg width="24px" height="24px" viewBox="0 0 24 24">
               <path d="M19.4 13c0-.3.1-.6.1-1s0-.7-.1-1l2.1-1.7c.2-.2.2-.4.1-.6l-2-3.5c-.1-.1-.3-.2-.6-.1l-2.5 1c-.5-.4-1.1-.7-1.7-1l-.4-2.6c.1-.3-.2-.5-.4-.5h-4c-.2 0-.5.2-.5.4l-.4 2.7c-.6.2-1.1.6-1.7 1l-2.4-1c-.3-.1-.5 0-.7.2l-2 3.5c-.1.1 0 .4.2.6l2.1 1.6c0 .3-.1.6-.1 1s0 .7.1 1l-2.1 1.7c-.2.2-.2.4-.1.6l2 3.5c.1.1.3.2.6.1l2.5-1c.5.4 1.1.7 1.7 1l.4 2.6c0 .2.2.4.5.4h4c.2 0 .5-.2.5-.4l.4-2.6c.6-.3 1.2-.6 1.7-1l2.5 1c.2.1.5 0 .6-.2l2-3.5c.1-.2.1-.5-.1-.6l-2.3-1.6zm-7.4 2.5c-1.9 0-3.5-1.6-3.5-3.5s1.6-3.5 3.5-3.5 3.5 1.6 3.5 3.5-1.6 3.5-3.5 3.5z"/>
             </svg>
           </spark-button>
@@ -135,13 +137,13 @@
             horizontal
             justify="right"
             spacing="small">
-          <!-- spark-button id="leftNav" flat round padding="medium">
-            <svg viewBox="0 0 24 24">
+          <!-- spark-button id="leftNav" flat round>
+            <svg width="24px" height="24px" viewBox="0 0 24 24">
               <path d="M20 11h-12.2l5.6-5.6-1.4-1.4-8 8 8 8 1.4-1.4-5.6-5.6h12.2v-2z"/>
             </svg>
           </spark-button>
-          <spark-button id="rightNav" flat round padding="medium">
-            <svg viewBox="0 0 24 24">
+          <spark-button id="rightNav" flat round>
+            <svg width="24px" height="24px" viewBox="0 0 24 24">
               <path d="M12 4l-1.4 1.4 5.6 5.6h-12.2v2h12.2l-5.6 5.6 1.4 1.4 8-8z"/>
             </svg>
           </spark-button -->
@@ -180,7 +182,7 @@
       <label for="renameFileName">New name</label>
       <input id="renameFileName" type="text" class="form-control"
           required pattern="[\w\.-]+"
-          spellcheck="false" autosave>
+          spellcheck="false" autosave focused>
 
       <spark-dialog-button cancel>Cancel</spark-dialog-button>
       <spark-dialog-button submit>Rename</spark-dialog-button>
@@ -191,7 +193,7 @@
       <label for="fileName">New file name</label>
       <input id="fileName" type="text" class="form-control"
           required pattern="[\w\.-]+"
-          spellcheck="false">
+          spellcheck="false" focused>
 
       <spark-dialog-button cancel>Cancel</spark-dialog-button>
       <spark-dialog-button submit>Create</spark-dialog-button>
@@ -202,7 +204,7 @@
       <label for="folderName">New folder name</label>
       <input id="folderName" type="text" class="form-control"
           required pattern="[\w\.-]+"
-          spellcheck="false">
+          spellcheck="false" focused>
 
       <spark-dialog-button cancel>Cancel</spark-dialog-button>
       <spark-dialog-button submit>Create</spark-dialog-button>
@@ -363,6 +365,7 @@
         <input id="gitRepoUrl" type="url" class="form-control"
             placeholder="https://github.com/dart-lang/spark.git"
             spellcheck="false" autosave focused>
+        <input id="gitRepoUrlCopyInBuffer"/>
       </div>
 
       <spark-dialog-button id="cloneClose" cancel>Cancel</spark-dialog-button>
@@ -424,7 +427,7 @@
       <div class="form-group">
         <label for="currentBranchName">Current branch</label>
         <input id="currentBranchName" type="text" class="form-control"
-            spellcheck="false" disabled>
+            spellcheck="false" disabled focused>
       </div>
       <div class="form-group">
         <label for="gitCheckoutBranch">Switch to branch</label>
@@ -440,7 +443,7 @@
         <div id="gitCommitList"></div>
       </div>
       <spark-dialog-button id="gitPushClose">Cancel</spark-dialog-button>
-      <spark-dialog-button id="gitPush" submit>Push</spark-dialog-button>
+      <spark-dialog-button id="gitPush" submit focused>Push</spark-dialog-button>
     </spark-dialog>
 
     <!-- About dialog -->
@@ -460,7 +463,7 @@
           </label>
         </div>
       </div>
-      <spark-dialog-button submit>Done</spark-dialog-button>
+      <spark-dialog-button submit focused>Done</spark-dialog-button>
     </spark-dialog>
 
     <!-- Settings dialog -->

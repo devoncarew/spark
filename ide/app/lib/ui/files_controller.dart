@@ -213,7 +213,7 @@ class FilesController implements TreeViewDelegate {
 
   int treeViewDisclosurePositionForNode(TreeView view, String nodeUid) {
     Resource resource = _filesMap[nodeUid];
-    return resource is Project ? 7 : -1;
+    return resource is Project ? 12 : 2 ;
   }
 
   void treeViewSelectedChanged(TreeView view, List<String> nodeUids) {
@@ -806,7 +806,8 @@ class FilesController implements TreeViewDelegate {
       }
 
       ScmFileStatus status = scmOperations.getFileStatus(resource);
-      fileItemCell.setGitStatus(dirty: (status != ScmFileStatus.COMMITTED));
+      fileItemCell.setGitStatus(dirty: (status != ScmFileStatus.COMMITTED),
+          added: (status == ScmFileStatus.ADDED));
     }
   }
 
