@@ -1,5 +1,5 @@
 {
-  "app_name": { "message": "Spark" },
+  "app_name": { "message": "Chrome Dev Editor" },
   "app_description": { "message": "A Chrome app based development environment" },
 
   "ace_modes": { "message":

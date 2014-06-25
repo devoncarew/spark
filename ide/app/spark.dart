@@ -3381,7 +3381,7 @@ class PubGetJob extends PackageManagementJob {
 
   Future _run() {
     if (DemoManager.isDemoMode && DemoManager.isDemoProject(_container.project)) {
-      return new Future.delayed(new Duration(milliseconds: 2500));
+      return new Future.delayed(new Duration(milliseconds: 3000));
     } else {
       return _spark.pubManager.installPackages(_container);
     }
@@ -3482,7 +3482,7 @@ class ResourceRefreshJob extends Job {
 
 class AboutSparkAction extends SparkActionWithDialog {
   AboutSparkAction(Spark spark, Element dialog)
-      : super(spark, "help-about", "About Spark", dialog) {
+      : super(spark, "help-about", "About Chrome Dev Editor", dialog) {
     _checkbox.checked = _isTrackingPermitted;
     _checkbox.onChange.listen((e) => _isTrackingPermitted = _checkbox.checked);
   }
@@ -3666,31 +3666,44 @@ class RestartSparkAction extends SparkAction {
   _invoke([Object context]) {
     if (!DemoManager.isDemoMode) return;
 
-//    <div id="splashScreen">
-//      <div id="splashScreenProgress"></div>
-//    </div>
-
     DivElement splash = new DivElement();
     splash.id = 'splashScreen';
     Element inner = new DivElement();
     inner.id = 'splashScreenProgress';
     splash.children.add(inner);
 
-    chrome.AppWindow win = chrome.app.window.current();
-    document.body.children.add(splash);
-    win.hide();
-    DemoManager.demoManager.reconcile();
 
-    new Future.delayed(new Duration(milliseconds: 250)).then((_) {
-      win.show();
+    Element whiteSplash = new DivElement();
+    whiteSplash.style
+        ..zIndex = '999'
+        ..position = 'absolute'
+        ..left = '0'
+        ..right = '0'
+        ..top = '0'
+        ..bottom = '0'
+        ..color = 'white';
 
-      return new Future.delayed(new Duration(milliseconds: 3000));
-    }).then((_) {
-      splash.classes.add('closeSplash');
+    document.body.children.add(whiteSplash);
 
-      return new Future.delayed(new Duration(milliseconds: 300));
-    }).then((_) {
-      splash.parent.children.remove(splash);
+    nextTick().then((_) {
+      chrome.AppWindow win = chrome.app.window.current();
+      win.hide();
+      document.body.children.add(splash);
+      whiteSplash.parent.children.remove(whiteSplash);
+
+      DemoManager.demoManager.reconcile();
+
+      new Future.delayed(new Duration(milliseconds: 350)).then((_) {
+        win.show();
+
+        return new Future.delayed(new Duration(milliseconds: 4500));
+      }).then((_) {
+        splash.classes.add('closeSplash');
+
+        return new Future.delayed(new Duration(milliseconds: 300));
+      }).then((_) {
+        splash.parent.children.remove(splash);
+      });
     });
   }
 }
