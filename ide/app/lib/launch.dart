@@ -9,7 +9,6 @@ library spark.launch;
 
 import 'dart:async';
 import 'dart:convert';
-import 'dart:html' show window;
 
 import 'package:chrome/chrome_app.dart' as chrome;
 import 'package:chrome/gen/management.dart';
@@ -17,6 +16,7 @@ import 'package:intl/intl.dart';
 import 'package:logging/logging.dart';
 
 import 'apps/app_utils.dart';
+import 'browser.dart';
 import 'developer_private.dart';
 import 'enum.dart';
 import 'exception.dart';
@@ -526,6 +526,7 @@ class WebAppLocalLaunchHandler extends LaunchTargetHandler {
   final Services services;
   final PackageManager pubManager;
   final PackageManager bowerManager;
+  final BrowserHelper browser = new BrowserHelper();
 
   Project get lastLaunchedProject => launchManager.lastLaunchedProject;
 
@@ -569,7 +570,7 @@ class WebAppLocalLaunchHandler extends LaunchTargetHandler {
   }
 
   Future launch(Application application, LaunchTarget launchTarget) {
-    window.open(_getUrlFor(server, application.primaryResource), '_blank');
+    browser.openTab(_getUrlFor(server, application.primaryResource));
 
     return new Future.value();
   }
