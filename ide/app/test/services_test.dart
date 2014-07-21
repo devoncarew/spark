@@ -19,10 +19,12 @@ defineTests() {
 
   group('services', () {
     test('ping', () {
-      // TODO(devoncarew): Disabled for now: #2927.
-//      return services.ping().then((result) {
-//        expect(result, equals("pong"));
-//      });
+      // TODO(devoncarew): Hmm.
+      services.ping();
+
+      return services.ping().then((result) {
+        expect(result, equals("pong"));
+      });
     });
   });
 
