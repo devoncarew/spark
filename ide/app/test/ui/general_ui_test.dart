@@ -68,7 +68,7 @@ defineTests() {
       dialogTester.dialogAccess.clickButtonWithTitle("done");
 
       // TODO(devoncarew): Disabled for now: #2927.
-      if (true) null;
+      if (true) return null;
 
       expect(dialogTester.functionallyOpened, false);
 
@@ -86,7 +86,7 @@ defineTests() {
 
     test('Git clone menu item', () {
       // TODO(devoncarew): Disabled for now: #2927.
-      if (true) null;
+      if (true) return null;
 
       return sparkTester.openAndCloseWithX(
           sparkAccess.gitCloneMenu, sparkAccess.okCancelDialog);
