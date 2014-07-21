@@ -8,6 +8,7 @@ import 'package:unittest/unittest.dart';
 
 import '../lib/package_mgmt/pub.dart';
 import '../lib/services.dart';
+import '../lib/utils.dart';
 import '../lib/workspace.dart' as ws;
 
 defineTests() {
@@ -17,6 +18,9 @@ defineTests() {
 
   group('outline service tests', () {
     test('resource read', () {
+      // TODO(devoncarew): Disabled for now: #2927.
+      if (isDart2js()) return null;
+
       String code = """
           int topLevelVariableName, topLevelVariable2Name = 1;
           topLevelFunctionName() {}
