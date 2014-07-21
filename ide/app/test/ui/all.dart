@@ -1,4 +1,4 @@
-// Copyright (c) 2013, Google Inc. Please see the AUTHORS file for details.
+// Copyright (c) 2014, Google Inc. Please see the AUTHORS file for details.
 // All rights reserved. Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -7,11 +7,12 @@
  */
 library spark.ui.all_tests;
 
-import 'general_ui_test.dart' as general_ui_test;
+//import 'general_ui_test.dart' as general_ui_test;
 
 /**
  * Place all new tests here.
  */
 void defineTests() {
-  general_ui_test.defineTests();
+  // TODO(devoncarew): Disabled for now: #2927.
+  //general_ui_test.defineTests();
 }
