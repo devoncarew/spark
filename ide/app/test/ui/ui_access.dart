@@ -2,30 +2,33 @@
 // All rights reserved. Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+/**
+ * TODO: Add documentation.
+ */
 library spark.ui_access;
 
 import 'dart:async';
 import 'dart:html';
 
+import 'package:spark_widgets/common/spark_widget.dart';
+import 'package:spark_widgets/spark_button/spark_button.dart';
 import 'package:spark_widgets/spark_dialog/spark_dialog.dart';
 import 'package:spark_widgets/spark_dialog_button/spark_dialog_button.dart';
 import 'package:spark_widgets/spark_menu_button/spark_menu_button.dart';
 import 'package:spark_widgets/spark_menu_item/spark_menu_item.dart';
-import 'package:spark_widgets/spark_button/spark_button.dart';
 import 'package:spark_widgets/spark_modal/spark_modal.dart';
-import 'package:spark_widgets/common/spark_widget.dart';
 
 import '../../spark_polymer_ui.dart';
 
 class SparkUIAccess {
+  static SparkUIAccess _instance;
+
   MenuItemAccess newProjectMenu =
       new MenuItemAccess("project-new", "newProjectDialog");
   MenuItemAccess gitCloneMenu =
       new MenuItemAccess("git-clone", "gitCloneDialog");
   MenuItemAccess aboutMenu =
       new MenuItemAccess("help-about", "aboutDialog");
-
-  static SparkUIAccess _instance;
 
   DialogAccess get aboutDialog => aboutMenu.dialog;
   DialogAccess get gitCloneDialog => gitCloneMenu.dialog;

@@ -39,8 +39,9 @@ import 'lib/package_mgmt/pub.dart';
 import 'lib/package_mgmt/bower.dart';
 import 'lib/platform_info.dart';
 import 'lib/preferences.dart' as preferences;
-import 'lib/services.dart';
 import 'lib/scm.dart';
+import 'lib/scriptable.dart';
+import 'lib/services.dart';
 import 'lib/templates/templates.dart';
 import 'lib/tests.dart';
 import 'lib/utils.dart';
@@ -74,7 +75,7 @@ Zone createSparkZone() {
 
 abstract class Spark
     extends SparkModel
-    implements AceManagerDelegate, Notifier, SearchViewControllerDelegate {
+    implements AceManagerDelegate, Notifier, SearchViewControllerDelegate, IsScriptable {
 
   /// The Google Analytics app ID for Spark.
   static final _ANALYTICS_ID = 'UA-45578231-1';
@@ -99,6 +100,7 @@ abstract class Spark
   NavigationManager _navigationManager;
 
   EventBus _eventBus;
+  Scriptable _scriptable;
 
   FilesController _filesController;
   SearchViewController _searchViewController;
@@ -123,11 +125,13 @@ abstract class Spark
   Future init() {
     // Init the dependency manager.
     dependencies[DecoratorManager] = new DecoratorManager();
+    dependencies[Spark] = this;
 
     initPreferences();
     initEventBus();
 
     initAnalytics();
+    initScriptable();
 
     initWorkspace();
     initPackageManagers();
@@ -453,6 +457,22 @@ abstract class Spark
   void initSaveStatusListener() {
     // Overridden in spark_polymer.dart.
   }
+
+  void initScriptable() {
+    List<ScriptableProperty> properties = [
+      new ScriptableProperty('workspace', () => workspace)
+    ];
+
+    List<ScriptableAction> actions = [
+      new ScriptableAction('showAbout', () => _invokeAction('help-about')),
+      new ScriptableAction('showSettings', () => _invokeAction('settings')),
+      new ScriptableAction('runTests', () => _invokeAction('run-tests'))
+    ];
+
+    _scriptable = new Scriptable('Spark', properties, actions);
+  }
+
+  Scriptable getScriptable() => _scriptable;
 
   void createActions() {
     _actionManager = new ActionManager();
@@ -947,6 +967,18 @@ abstract class Spark
 
   void searchViewControllerNavigate(SearchViewController controller, NavigationLocation location) {
     navigationManager.gotoLocation(location);
+  }
+
+  Future<Action> _invokeAction(String id) {
+    Action action = actionManager.getAction(id);
+
+    if (action == null) {
+      return new Future.error('no action id: ${id}');
+    }
+
+    action.invoke();
+
+    return nextTick().then((_) => action);
   }
 }
 

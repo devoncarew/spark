@@ -8,7 +8,7 @@ import 'dart:async';
 
 import 'package:unittest/unittest.dart';
 
-import "ui_access.dart";
+import 'ui_access.dart';
 
 class DialogTester {
   DialogAccess dialogAccess;
