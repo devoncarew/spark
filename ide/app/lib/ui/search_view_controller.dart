@@ -59,7 +59,7 @@ class SearchViewController implements TreeViewDelegate, WorkspaceSearchDelegate 
   // Workspace that references all the resources.
   final Workspace _workspace;
   WorkspaceSearch _search;
-  bool _searching;
+  bool _searching = false;
   bool _reachedMaxResults = false;
   List<WorkspaceSearchResultItem> _items = [];
   Map<String, WorkspaceSearchResultItem> _filesMap = {};

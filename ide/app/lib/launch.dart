@@ -18,11 +18,13 @@ import 'package:logging/logging.dart';
 
 import 'apps/app_utils.dart';
 import 'developer_private.dart';
+import 'dependency.dart';
 import 'enum.dart';
 import 'exception.dart';
 import 'jobs.dart';
 import 'package_mgmt/package_manager.dart';
 import 'package_mgmt/pub.dart';
+import 'scriptable.dart';
 import 'server.dart';
 import 'services.dart';
 import 'utils.dart';
@@ -30,6 +32,7 @@ import 'workspace.dart';
 import 'workspace_utils.dart';
 // TODO(devoncarew): We don't want a dependency from here to spark.dart...
 import '../spark.dart';
+import '../spark_flags.dart';
 
 final Logger _logger = new Logger('spark.launch');
 
@@ -518,7 +521,7 @@ class ChromeAppRemoteLaunchHandler extends LaunchTargetHandler {
  * machine.
  */
 class WebAppLocalLaunchHandler extends LaunchTargetHandler {
-  final int preferredPort = 51792;
+  static final int preferredPort = 8000;
 
   final LaunchManager launchManager;
   final Workspace workspace;
@@ -542,6 +545,11 @@ class WebAppLocalLaunchHandler extends LaunchTargetHandler {
       server.addServlet(new PubPackagesServlet(workspace, pubManager));
       server.addServlet(new WorkspaceServlet(workspace));
       server.addServlet(new BowerPackagesServlet(this, bowerManager));
+
+      if (SparkFlags.developerMode) {
+        Spark spark = Dependencies.dependency[Spark];
+        server.addServlet(new StatuszServlet(spark));
+      }
 
       _logger.info('embedded web server listening on port ${server.port}');
     }).catchError((error) {
@@ -949,6 +957,70 @@ class StaticResourcesServlet extends PicoServlet {
       response.setContentTypeFrom('favicon.ico');
       return new Future.value(response);
     });
+  }
+}
+
+/**
+ * A development time only servlet that responds to /statusz requests.
+ *
+ * TODO: handle posts
+ */
+class StatuszServlet extends PicoServlet {
+  Scriptable scriptable;
+
+  StatuszServlet(IsScriptable rootScriptable) {
+    scriptable = rootScriptable.getScriptable();
+  }
+
+  bool canServe(HttpRequest request) {
+    return request.uri.path.startsWith('/statusz');
+  }
+
+  Future<HttpResponse> serve(HttpRequest request) {
+    if (request.method == 'POST' && request.postData != null) {
+      String data = new String.fromCharCodes(request.postData);
+      if (data.contains('=')) {
+        data = data.substring(0, data.indexOf('='));
+        _performAction(data);
+      }
+    }
+
+    HttpResponse response = new HttpResponse.ok();
+    response.setContent(_createPage());
+    response.setContentTypeFrom('foo.html');
+    return new Future.value(response);
+  }
+
+  String _createPage() {
+    StringBuffer out = new StringBuffer();
+
+    out.write('<html><body>\n');
+    out.write('<h2>${scriptable.name}</h2>\n');
+
+    out.write('Properties:\n<ul>');
+    scriptable.properties.forEach(
+        (property) => out.write('<li>${property.name}: ${property.value}'));
+    out.write('</ul>\n');
+
+    out.write('Actions:\n<ul>');
+    scriptable.actions.forEach((action) {
+      out.write('<li><form method="post"><button name="${action.name}">${action.name}</button></form>');
+    });
+    out.write('</ul>\n');
+
+    out.write('</body></html>\n');
+
+    return out.toString();
+  }
+
+  void _performAction(String actionName) {
+    ScriptableAction action = scriptable.getAction(actionName);
+
+    if (action != null) {
+      action.invoke().catchError((e) {
+        _logger.info('Error invoking ${actionName}: ${e}');
+      });
+    }
   }
 }
 

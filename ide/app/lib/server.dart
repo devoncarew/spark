@@ -129,7 +129,7 @@ class HttpRequest {
 
     StreamSubscription sub;
 
-    // collect all bytes until we receieve \r\n\r\n
+    // Collect all bytes until we receive \r\n\r\n.
     sub = client.stream.listen((List<int> data) {
       int i = 0;
 
@@ -202,7 +202,8 @@ class HttpRequest {
       }
     }
 
-    return new HttpRequest._(method: method, uri: path, headers: headers);
+    return new HttpRequest._(method: method, uri: path, headers: headers,
+        postData: remainingData.isEmpty ? null : remainingData);
   }
 
   /// 'HTTP/1.1' ==> '1.1'
@@ -238,12 +239,17 @@ class HttpRequest {
   final HttpHeaders headers;
 
   /**
+   * Any POST data that was sent with the header.
+   */
+  final List<int> postData;
+
+  /**
    * The HTTP protocol version used in the request, either "1.0" or "1.1"
    * (read-only).
    */
   String get protocolVersion => (headers as _HttpHeaders).protocolVersion;
 
-  HttpRequest._({this.method, this.uri, this.headers});
+  HttpRequest._({this.method, this.uri, this.headers, this.postData});
 
   String toString() => '${method} ${uri} ${protocolVersion}';
 }

@@ -19,12 +19,14 @@ abstract class IsScriptable {
 /**
  * TODO:
  */
-class Scriptable {
+class Scriptable implements IsScriptable {
   final String name;
   final List<ScriptableProperty> properties;
   final List<ScriptableAction> actions;
 
   Scriptable(this.name, this.properties, this.actions);
+
+  Scriptable getScriptable() => this;
 
   /**
    * Return any [Scriptable]s referenced from the properties of this object.
