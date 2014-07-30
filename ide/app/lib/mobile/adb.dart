@@ -319,7 +319,7 @@ class AndroidDevice {
   // message.
   Future<TransferResultInfo> sendBuffer(ByteData buffer) {
     chrome.ArrayBuffer arrayBuffer = new chrome.ArrayBuffer.fromBytes(
-        new Uint8List.view(buffer.buffer).toList());
+        new Uint8List.view(buffer.buffer));
 
     chrome.GenericTransferInfo transferInfo = new chrome.GenericTransferInfo()
         ..direction = outDescriptor.direction
@@ -432,7 +432,7 @@ class AndroidDevice {
                   response.setData(new ByteData.view(signature.buffer));
                   sentSignature = true;
                   return sendMessage(response).then((_) {
-                      return handleConnectionMessage();
+                    return handleConnectionMessage();
                   });
                 });
               } else {

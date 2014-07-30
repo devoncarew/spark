@@ -115,21 +115,19 @@ class MobileDeploy {
    * (body content).
    */
   List<int> _buildHttpRequest(String target, String path, {List<int> payload}) {
-    List<int> httpRequest = [];
+    if (payload == null) {
+      payload = [];
+    }
 
     // Build the HTTP request headers.
+    List<int> httpRequest = [];
     String header =
         'POST /$path HTTP/1.1\r\n'
         'User-Agent: Chrome Dev Editor\r\n'
         'Host: ${target}:$DEPLOY_PORT\r\n';
-    List<int> body = [];
-
-    if (payload != null) {
-      body.addAll(payload);
-    }
     httpRequest.addAll(header.codeUnits);
-    httpRequest.addAll('Content-length: ${body.length}\r\n\r\n'.codeUnits);
-    httpRequest.addAll(body);
+    httpRequest.addAll('Content-length: ${payload.length}\r\n\r\n'.codeUnits);
+    httpRequest.addAll(payload);
 
     return httpRequest;
   }
@@ -160,8 +158,9 @@ class MobileDeploy {
     return archiveContainer(appContainer, true).then((List<int> archivedData) {
       monitor.worked(3);
       return _sendTcpRequest(target, _buildPushRequest(target, archivedData));
-    }).then((List<int> responseBytes) => _expectHttpOkResponse(responseBytes)
-    ).then((_) {
+    }).then((List<int> responseBytes) {
+      return _expectHttpOkResponse(responseBytes);
+    }).then((_) {
       monitor.worked(6);
       return _sendTcpRequest(target, _buildLaunchRequest(target));
     }).then((List<int> responseBytes) => _expectHttpOkResponse(responseBytes));
