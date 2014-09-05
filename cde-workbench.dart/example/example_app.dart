@@ -2,8 +2,8 @@
 // All rights reserved. Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//import 'package:cde_common/common.dart';
 import 'package:cde_core/core.dart';
+//import 'package:cde_workbench/cde_command_bar.dart';
 import 'package:cde_workbench/cde_workbench.dart';
 import 'package:cde_workbench/keys.dart';
 import 'package:cde_workbench/commands.dart';
@@ -27,7 +27,7 @@ class ExampleApp extends CdeWorkbench {
     keys.bind('macctrl-a', 'do-foo');
     keys.bind('macctrl-s', 'do-bar');
 
-    keys.bind(r'ctrl-\', 'show-commandbar');
-    commands.bind('show-commandbar', () => _workbench.showMessage('Command bar!'));
+    keys.bind(r'ctrl-\', 'foo-bar');
+    commands.bind('foo-bar', () => _workbench.showMessage('Foo! Bar!'));
   }
 }

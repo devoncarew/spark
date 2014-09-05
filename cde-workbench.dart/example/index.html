@@ -15,6 +15,7 @@
     <link rel="import" href="packages/paper_elements/paper_icon_button.html">
 
     <link rel="import" href="packages/paper_elements/roboto.html">
+    <link rel="import" href="packages/cde_workbench/cde_command_bar.html">
     <link rel="import" href="packages/cde_workbench/cde_editing_area.html">
     <link rel="import" href="packages/cde_workbench/cde_extensions.html">
     <link rel="import" href="packages/cde_workbench/cde_icon_button.html">
@@ -40,7 +41,9 @@ body /deep/ paper-dialog {
   </head>
   <body unresolved>
     <example-app>
-      <cde-editing-area flex></cde-editing-area>
+      <cde-editing-area flex>
+        <cde-command-bar id="command-bar"></cde-command-bar>
+      </cde-editing-area>
     </example-app>
 
     <cde-extensions>

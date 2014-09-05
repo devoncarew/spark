@@ -1,0 +1,36 @@
+
+<link rel="import" href="../../packages/polymer/polymer.html">
+
+<link rel="import" href="../../packages/paper_elements/paper_input.html">
+<link rel="import" href="../../packages/paper_elements/paper_shadow.html">
+
+<polymer-element name="cde-command-bar" hidden layout horizontal>
+  <template>
+    <style>
+      :host {
+        display: block;
+        z-index: 10;
+        position: fixed;
+        left: 20px;
+        right: 20px;
+        top: 70px;
+
+        background: #fefefe;
+        padding: 8px 8px 0px 8px;
+        border: 1px solid #ccc;
+      }
+
+      .hidden {
+        display: none;
+      }
+    </style>
+
+    <div class="card" layout horizontal flex>
+      <paper-input flex id="textInput" placeholder="Enter command" on-change={{handleChange}}></paper-input>
+      <paper-shadow z="1"></paper-shadow>
+    </div>
+
+    <!-- content></content -->
+  </template>
+  <script type="application/dart" src="cde_command_bar.dart"></script>
+</polymer-element>

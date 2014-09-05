@@ -18,4 +18,7 @@ dependencies:
 dev_dependencies:
   unittest: any
 transformers:
-- polymer
+- polymer:
+    entry_points:
+    - example/index.html
+    - web/index.html
