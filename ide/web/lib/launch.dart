@@ -16,9 +16,9 @@ import 'package:chrome/gen/management.dart';
 import 'package:chrome_net/server.dart';
 import 'package:intl/intl.dart';
 import 'package:logging/logging.dart';
+import 'package:spark/developer_private.dart';
 
 import 'apps/app_utils.dart';
-import 'developer_private.dart';
 import 'enum.dart';
 import 'exception.dart';
 import 'jobs.dart';
