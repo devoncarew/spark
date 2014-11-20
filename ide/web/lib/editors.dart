@@ -547,3 +547,69 @@ class PreferenceContentProvider implements ContentProvider {
   Future write(String content) => _store.setValue(_filename, content);
 }
 
+class EditorConfigFile implements File {
+  final String path;
+
+  String _contents;
+  int _timestamp = 0;
+
+  EditorConfigFile(this.path, this._contents);
+
+  String get name => path.contains('/')
+      ? path.substring(path.lastIndexOf('/') + 1) : path;
+
+  bool get isFile => true;
+  bool get isTopLevel => true;
+  html.Entry get entry => null;
+  Container get parent => null;
+  Project get project => null;
+
+  int get timestamp => _timestamp;
+
+  String get uuid => path;
+
+  List<Marker> getMarkers() => [];
+
+  Future<String> getContents() => new Future.value(_contents);
+
+  Future setContents(String contents) {
+    _contents = contents;
+    _timestamp = new DateTime.now().millisecondsSinceEpoch;
+    return new Future.value();
+  }
+
+  void clearMarkers([String type]) { }
+
+  bool containedBy(Container container) => false;
+
+  Marker createMarker(String type, int severity, String message, int lineNum, [int charStart = -1, int charEnd = -1]) {
+    return null;
+  }
+
+  Future delete() => new Future.value();
+
+  int findMaxProblemSeverity() => 0;
+
+  Future/*<ArrayBuffer>*/ getBytes() => null; //new Future.value(_contents.codeUnits);
+
+  dynamic getMetadata(String key, [defaultValue]) => null;
+
+  bool isDerived() => false;
+
+  bool isScmPrivate() => false;
+
+  Future refresh() => new Future.value();
+
+  Future rename(String name) => new Future.value();
+
+  Future setBytes(List<int> data) => new Future.value();
+
+  Future setBytesArrayBuffer(/*ArrayBuffer*/ bytes) => new Future.value();
+
+  void setMetadata(String key, data) { }
+
+  Iterable<Resource> traverse({bool includeDerived: true}) => [this];
+
+  Workspace get workspace => null;
+}
+
